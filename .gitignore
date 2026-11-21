@@ -1,0 +1,34 @@
+# Secrets / local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+client_secret*.json
+secrets/
+
+# User/project data (never commit real data)
+data/
+projects/
+workspace/
+backups/
+exports/
+*.xlsx
+*.xls
+*.csv
+
+# Build artifacts
+build/
+dist/
+release-builds/
+*.exe
+*.msi
+*.app
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+ desktop.ini
+.vscode/
+.idea/
