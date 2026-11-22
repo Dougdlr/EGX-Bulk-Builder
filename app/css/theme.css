@@ -1,0 +1,380 @@
+:root {
+    --egx-tint: #8b5cf6;
+    --egx-wall-opacity: 0.6;
+    --egx-glass-blur: 22px;
+}
+
+/* ---------- Papel de parede (corrige: antes ficava atrás do fundo opaco e com 8% de opacidade) ---------- */
+html[data-egx-wall='on'] body,
+html[data-egx-theme='glass'] body,
+html[data-egx-theme='tint'] body {
+    background-color: transparent !important;
+    background-image: none !important;
+}
+html[data-egx-wall='on'] #egx-wallpaper-layer,
+html[data-egx-theme='glass'] #egx-wallpaper-layer,
+html[data-egx-theme='tint'] #egx-wallpaper-layer {
+    opacity: var(--egx-wall-opacity) !important;
+}
+html[data-egx-wall='on'] #egx-launcher,
+html[data-egx-theme='glass'] #egx-launcher,
+html[data-egx-theme='tint'] #egx-launcher {
+    background: linear-gradient(
+        130deg,
+        rgba(4, 7, 14, 0.55),
+        rgba(10, 12, 23, 0.35) 60%,
+        rgba(34, 12, 55, 0.3)
+    ) !important;
+}
+/* Sem imagem, os temas de vidro ganham manchas de cor para o desfoque ter o que refratar */
+#egx-wallpaper-layer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.4s;
+    background: radial-gradient(
+            42% 48% at 14% 18%,
+            color-mix(in srgb, var(--egx-tint) 70%, transparent),
+            transparent 70%
+        ),
+        radial-gradient(36% 40% at 88% 12%, rgba(56, 189, 248, 0.45), transparent 70%),
+        radial-gradient(44% 46% at 72% 88%, color-mix(in srgb, var(--egx-tint) 55%, transparent), transparent 70%),
+        radial-gradient(34% 38% at 22% 92%, rgba(236, 72, 153, 0.32), transparent 70%);
+}
+html:is([data-egx-theme='glass'], [data-egx-theme='tint']):not([data-egx-wall='on']) #egx-wallpaper-layer::after {
+    opacity: 1;
+}
+
+/* Animações de entrada que ficavam "presas" no fim impediam o desfoque de enxergar o fundo */
+.animate-fade-in,
+.animate-slide-up {
+    animation-fill-mode: none !important;
+}
+
+/* ---------- Liquid Glass ---------- */
+html[data-egx-theme='glass'] {
+    --egx-surface: rgba(18, 24, 40, 0.3);
+    --egx-surface2: rgba(24, 34, 54, 0.34);
+    --egx-border: rgba(255, 255, 255, 0.13);
+}
+html[data-egx-theme='glass']
+    :is(
+        header,
+        .egx-launcher-card,
+        #egx-project-dashboard > div > .egx-dash-card,
+        #egx-project-dashboard > section.egx-dash-card,
+        #module-meta-ads > aside,
+        #module-meta-ads > main > div,
+        #module-meta-ads > main > section > div,
+        #module-extractor > section,
+        #module-extractor > div.grid > div,
+        #module-tasks > section,
+        #module-tasks > .egx-td-grid > section,
+        #be-dropzone,
+        #be-import-preview,
+        #be-workspace
+    ) {
+    background: linear-gradient(
+            140deg,
+            rgba(255, 255, 255, 0.13),
+            rgba(255, 255, 255, 0.035) 45%,
+            rgba(255, 255, 255, 0.07)
+        ),
+        rgba(14, 19, 34, 0.34) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.22),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+        0 20px 44px rgba(0, 0, 0, 0.3) !important;
+    -webkit-backdrop-filter: blur(var(--egx-glass-blur)) saturate(175%) !important;
+    backdrop-filter: blur(var(--egx-glass-blur)) saturate(175%) !important;
+}
+
+/* ---------- Vidro colorido ---------- */
+html[data-egx-theme='tint'] {
+    --egx-surface: color-mix(in srgb, var(--egx-tint) 14%, rgba(12, 16, 28, 0.42));
+    --egx-border: color-mix(in srgb, var(--egx-tint) 38%, transparent);
+}
+html[data-egx-theme='tint']
+    :is(
+        header,
+        .egx-launcher-card,
+        #egx-project-dashboard > div > .egx-dash-card,
+        #egx-project-dashboard > section.egx-dash-card,
+        #module-meta-ads > aside,
+        #module-meta-ads > main > div,
+        #module-meta-ads > main > section > div,
+        #module-extractor > section,
+        #module-extractor > div.grid > div,
+        #module-tasks > section,
+        #module-tasks > .egx-td-grid > section,
+        #be-dropzone,
+        #be-import-preview,
+        #be-workspace
+    ) {
+    background: linear-gradient(
+            140deg,
+            color-mix(in srgb, var(--egx-tint) 26%, transparent),
+            color-mix(in srgb, var(--egx-tint) 6%, transparent) 55%
+        ),
+        rgba(10, 14, 26, 0.42) !important;
+    border: 1px solid color-mix(in srgb, var(--egx-tint) 42%, rgba(255, 255, 255, 0.08)) !important;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        0 20px 44px rgba(0, 0, 0, 0.32) !important;
+    -webkit-backdrop-filter: blur(var(--egx-glass-blur)) saturate(160%) !important;
+    backdrop-filter: blur(var(--egx-glass-blur)) saturate(160%) !important;
+}
+
+/* Campos e faixas internas ficam translúcidos nos temas de vidro */
+html:is([data-egx-theme='glass'], [data-egx-theme='tint'])
+    :is(#egx-launcher, #egx-project-dashboard, #module-meta-ads, #module-extractor, #module-bulk-editor)
+    :is(
+        textarea,
+        select,
+        .fld,
+        input[type='text'],
+        input[type='url'],
+        input[type='number'],
+        input[type='search'],
+        input:not([type])
+    ) {
+    background-color: rgba(6, 10, 20, 0.46) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+html:is([data-egx-theme='glass'], [data-egx-theme='tint'])
+    :is(
+        #be-workspace > div:first-child,
+        #be-workspace table thead,
+        #module-meta-ads th,
+        #module-extractor th,
+        #egx-project-dashboard section .egx-dash-card,
+        #module-meta-ads .bg-egx-card,
+        #module-meta-ads .bg-egx-bg,
+        #module-extractor .bg-egx-card,
+        #module-extractor .bg-egx-bg
+    ) {
+    background: rgba(8, 12, 24, 0.34) !important;
+}
+
+/* ---------- Cor sólida ---------- */
+html[data-egx-theme='solid'] {
+    --egx-bg: color-mix(in srgb, var(--egx-tint) 7%, #05070c);
+    --egx-surface: color-mix(in srgb, var(--egx-tint) 9%, #0d121b);
+    --egx-surface2: color-mix(in srgb, var(--egx-tint) 12%, #111827);
+    --egx-border: color-mix(in srgb, var(--egx-tint) 24%, #1f2937);
+}
+html[data-egx-theme='solid'] body {
+    background-image: none !important;
+}
+html[data-egx-theme='solid'] #egx-wallpaper-layer {
+    display: none !important;
+}
+html[data-egx-theme='solid'] #egx-launcher {
+    background: var(--egx-bg) !important;
+}
+html[data-egx-theme='solid']
+    :is(
+        header,
+        .egx-launcher-card,
+        #egx-project-dashboard > div > .egx-dash-card,
+        #egx-project-dashboard > section.egx-dash-card,
+        #module-meta-ads > aside,
+        #module-meta-ads > main > div,
+        #module-meta-ads > main > section > div,
+        #module-extractor > section,
+        #module-extractor > div.grid > div,
+        #module-tasks > section,
+        #module-tasks > .egx-td-grid > section,
+        #be-dropzone,
+        #be-import-preview,
+        #be-workspace
+    ) {
+    background: var(--egx-surface) !important;
+    border-color: var(--egx-border) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* Celulares: desfoque mais leve para não pesar */
+@media (max-width: 1023px) {
+    html:is([data-egx-theme='glass'], [data-egx-theme='tint'])
+        :is(
+            header,
+            .egx-launcher-card,
+            #egx-project-dashboard > div > .egx-dash-card,
+            #egx-project-dashboard > section.egx-dash-card,
+            #module-meta-ads > aside,
+            #module-meta-ads > main > div,
+            #module-meta-ads > main > section > div,
+            #module-extractor > section,
+            #module-extractor > div.grid > div,
+            #module-tasks > section,
+            #module-tasks > .egx-td-grid > section,
+            #be-dropzone,
+            #be-import-preview,
+            #be-workspace
+        ) {
+        -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
+        backdrop-filter: blur(12px) saturate(150%) !important;
+    }
+}
+
+/* ---------- Painel "Aparência" ---------- */
+#egx-appearance-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    width: 330px;
+    max-width: calc(100vw - 24px);
+    z-index: 60;
+    padding: 14px;
+    border-radius: 16px;
+    background: #0c111e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transform-origin: top right;
+}
+#egx-appearance-panel.hidden {
+    display: none !important;
+}
+.egx-ap-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+.egx-ap-themes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.egx-ap-themes button {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    text-align: left;
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.6);
+    transition:
+        border-color 0.18s,
+        background-color 0.18s,
+        transform 0.18s;
+}
+.egx-ap-themes button:hover {
+    border-color: rgba(168, 85, 247, 0.45);
+}
+.egx-ap-themes button:active {
+    transform: scale(0.98);
+}
+.egx-ap-themes button[aria-pressed='true'] {
+    border-color: var(--egx-tint);
+    box-shadow: 0 0 0 1px var(--egx-tint) inset;
+}
+.egx-ap-themes b {
+    font-size: 12px;
+    color: #f1f5f9;
+}
+.egx-ap-themes small {
+    font-size: 10.5px;
+    color: #94a3b8;
+    line-height: 1.3;
+}
+.egx-ap-prev {
+    display: block;
+    width: 100%;
+    height: 34px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.prev-egx {
+    background: linear-gradient(135deg, #0b1120, #111a2b 55%, #24103d);
+}
+.prev-glass {
+    background: linear-gradient(140deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.08)),
+        radial-gradient(circle at 20% 30%, var(--egx-tint), transparent 60%), #1e293b;
+}
+.prev-tint {
+    background: linear-gradient(
+        140deg,
+        color-mix(in srgb, var(--egx-tint) 70%, transparent),
+        color-mix(in srgb, var(--egx-tint) 15%, #0b1120)
+    );
+}
+.prev-solid {
+    background: color-mix(in srgb, var(--egx-tint) 22%, #0d121b);
+}
+.egx-ap-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.egx-ap-swatches button {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--sw);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    transition: transform 0.15s;
+}
+.egx-ap-swatches button:hover {
+    transform: scale(1.1);
+}
+.egx-ap-swatches button[aria-pressed='true'] {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px var(--sw);
+}
+.egx-ap-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.egx-ap-btn {
+    flex: 1;
+    cursor: pointer;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #e2e8f0;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: rgba(30, 41, 59, 0.6);
+    transition: background-color 0.18s;
+}
+.egx-ap-btn:hover {
+    background: rgba(51, 65, 85, 0.8);
+}
+.egx-ap-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+.egx-ap-range {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11.5px;
+    color: #cbd5e1;
+    margin-top: 8px;
+}
+.egx-ap-range input {
+    accent-color: var(--egx-tint);
+    width: 100%;
+}
+#egx-appearance-panel :focus-visible,
+.egx-ap-themes button:focus-visible {
+    outline: 2px solid var(--egx-tint);
+    outline-offset: 2px;
+}

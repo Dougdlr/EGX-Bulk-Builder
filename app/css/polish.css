@@ -1,0 +1,76 @@
+/* Evita piscar a Central de projetos antes da cachoeira inicial */
+html.egx-intro #egx-launcher > div {
+    opacity: 0;
+}
+/* Editor em Lote: área de trabalho só aparece depois de carregar uma planilha */
+#be-workspace.hidden {
+    display: none !important;
+}
+/* Remove caixa dupla: as etapas do Criador e o cabeçalho/grade do Extrator não precisam de moldura própria */
+#module-meta-ads > main > section {
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+#module-extractor > div:first-of-type,
+#module-extractor > div.grid {
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+#module-extractor > div:first-of-type {
+    padding: 2px 4px 0 !important;
+}
+#module-extractor > div:first-of-type h2 {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+}
+#be-filter-status {
+    min-width: 150px;
+}
+/* Cachoeira: blocos caem em sequência ao abrir uma janela/aba (só opacity + transform) */
+@keyframes egxFall {
+    from {
+        opacity: 0;
+        transform: translate3d(0, -12px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+.egx-fall {
+    animation: egxFall 0.36s cubic-bezier(0.22, 0.8, 0.24, 1) both;
+    animation-delay: calc(var(--egx-i, 0) * 48ms);
+}
+/* Toque de resposta nos botões principais */
+.tab-btn,
+.egx-launcher-btn,
+.btn-mini,
+.egx-dash-shortcut {
+    transition:
+        background-color 0.18s,
+        border-color 0.18s,
+        color 0.18s,
+        transform 0.18s;
+}
+.egx-dash-shortcut:hover {
+    transform: translateY(-2px);
+}
+.egx-dash-shortcut:active,
+.egx-launcher-btn:active,
+.btn-mini:active {
+    transform: scale(0.98);
+}
+details > summary {
+    transition: background-color 0.18s;
+}
+@media (prefers-reduced-motion: reduce) {
+    .egx-fall {
+        animation: none !important;
+    }
+}

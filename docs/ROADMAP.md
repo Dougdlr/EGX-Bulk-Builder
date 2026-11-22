@@ -2,8 +2,8 @@
 
 > Documento inicial para acompanhar decisões e etapas. Atualizar conforme o roadmap for aprovado.
 
-- [ ] Consolidar estrutura, integridade e armazenamento por projeto
-- [ ] Preparar persistência do módulo Tasks integrada aos projetos
+- [x] Consolidar estrutura, integridade e armazenamento por projeto (V14)
+- [x] Preparar persistência do módulo Tasks integrada aos projetos (V14)
 - [ ] Planejar integração com Google Calendar
 - [ ] Avaliar fluxo com Gather
 - [ ] Evoluir geração por templates e campanhas

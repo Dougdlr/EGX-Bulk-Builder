@@ -1,0 +1,62 @@
+/* EGX Local Workspace / Project Launcher - phase 1 */
+body.egx-launcher-active > header,
+body.egx-launcher-active > #egx-project-dashboard,
+body.egx-launcher-active > #module-meta-ads,
+body.egx-launcher-active > #module-extractor,
+body.egx-launcher-active > #module-bulk-editor {
+    display: none !important;
+}
+#egx-launcher {
+    display: none;
+    min-height: 100vh;
+    position: relative;
+    z-index: 35;
+    background: linear-gradient(130deg, rgba(4, 7, 14, 0.97), rgba(10, 12, 23, 0.95) 60%, rgba(34, 12, 55, 0.86));
+    padding: clamp(18px, 4vw, 54px);
+}
+body.egx-launcher-active #egx-launcher {
+    display: flex;
+}
+.egx-launcher-card {
+    background: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.17);
+    border-radius: 18px;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
+}
+.egx-launcher-btn {
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(15, 23, 42, 0.8);
+    padding: 11px 15px;
+    border-radius: 11px;
+    font-weight: 650;
+    font-size: 13px;
+    transition: 0.15s;
+}
+.egx-launcher-btn:hover {
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(168, 85, 247, 0.55);
+}
+.egx-launcher-btn.primary {
+    background: linear-gradient(110deg, #6d28d9, #7c3aed);
+    border-color: #8b5cf6;
+    color: white;
+}
+.egx-launcher-btn.primary:hover {
+    filter: brightness(1.1);
+}
+.egx-project-card {
+    transition: 0.15s;
+    cursor: pointer;
+}
+.egx-project-card:hover {
+    border-color: rgba(168, 85, 247, 0.5);
+    transform: translateY(-1px);
+}
+@media (max-width: 640px) {
+    #egx-launcher {
+        padding: 16px;
+    }
+    .egx-launcher-card {
+        border-radius: 14px;
+    }
+}

@@ -1,0 +1,198 @@
+/* Seleção e textos na tabela do Criador */
+.egx-sel-cell {
+    width: 42px;
+    padding: 0.75rem 0.5rem 0.75rem 1rem;
+    text-align: center;
+}
+.egx-sel-cell input {
+    width: 15px;
+    height: 15px;
+    accent-color: #8b5cf6;
+    cursor: pointer;
+}
+#meta-table-body tr.egx-row-sel {
+    background: rgba(139, 92, 246, 0.1);
+}
+.egx-txt-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+    min-height: 30px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    border: 1px dashed rgba(148, 163, 184, 0.25);
+    background: transparent;
+    text-align: left;
+    max-width: 240px;
+    transition:
+        border-color 0.18s,
+        background-color 0.18s;
+}
+.egx-txt-cell:hover {
+    border-color: rgba(168, 85, 247, 0.55);
+    background: rgba(139, 92, 246, 0.08);
+}
+.egx-txt-empty {
+    font-size: 11px;
+    color: #64748b;
+}
+.egx-txt-chip {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #ddd6fe;
+    background: rgba(139, 92, 246, 0.18);
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    border-radius: 999px;
+    padding: 2px 8px;
+    white-space: nowrap;
+}
+.egx-text-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.egx-text-btn:not(:disabled) {
+    color: #e9d5ff;
+    border-color: rgba(139, 92, 246, 0.5);
+    background: rgba(76, 29, 149, 0.35);
+}
+/* Janela de edição */
+#meta-text-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(2, 4, 10, 0.62);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+#meta-text-modal.hidden {
+    display: none !important;
+}
+body.egx-modal-open {
+    overflow: hidden;
+}
+.egx-tm-panel {
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 18px;
+    background: #0c111e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.egx-tm-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+.egx-tm-head h2 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #f8fafc;
+}
+.egx-tm-head p {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+    font-family: ui-monospace, monospace;
+}
+.egx-tm-x {
+    color: #94a3b8;
+    border-radius: 8px;
+    padding: 4px 9px;
+}
+.egx-tm-x:hover {
+    color: #fff;
+    background: rgba(148, 163, 184, 0.12);
+}
+.egx-tm-presets {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+}
+.egx-tm-row {
+    display: flex;
+    gap: 8px;
+}
+.egx-tm-row .fld {
+    flex: 1;
+    min-width: 0;
+}
+.egx-tm-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.egx-tm-field label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #e2e8f0;
+    cursor: pointer;
+}
+.egx-tm-field label input {
+    accent-color: #8b5cf6;
+    width: 15px;
+    height: 15px;
+}
+.egx-tm-field textarea {
+    resize: vertical;
+    min-height: 96px;
+    line-height: 1.5;
+}
+.egx-tm-field .fld {
+    width: 100%;
+}
+.egx-tm-count {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+}
+.egx-tm-count.over {
+    color: #fbbf24;
+}
+.egx-tm-hint {
+    font-size: 11.5px;
+    color: #94a3b8;
+}
+.egx-tm-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.egx-tm-spacer {
+    flex: 1;
+}
+.egx-tm-primary {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    padding: 9px 16px;
+    border-radius: 11px;
+    background: linear-gradient(110deg, #6d28d9, #7c3aed);
+    border: 1px solid #8b5cf6;
+    transition: filter 0.18s;
+}
+.egx-tm-primary:hover {
+    filter: brightness(1.1);
+}

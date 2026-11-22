@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0B0F19">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>EGX Bulk Builder V14</title>
+
+    <meta name="description" content="Gerador de planilhas de importação em massa do Meta Ads, organizador de nomes e editor em lote .XLSX.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23000000'/%3E%3Ctext x='50' y='64' font-family='Arial,sans-serif' font-weight='900' font-size='34' fill='%23ffffff' text-anchor='middle'%3EEGX%3C/text%3E%3C/svg%3E">
+
+    <!-- Manifesto PWA + service worker -->
+    <script src="js/boot/pwa-manifest.js"></script>
+
+    <!-- Tailwind: vendor/tailwind.css (offline). Se faltar, carrega o CDN com versão fixa. -->
+    <script>
+        window.__twCfg = { theme: { extend: {
+            fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+            colors: { egx: { bg: '#0B0F19', panel: '#0F172A', card: '#1E293B', border: '#334155' } }
+        } } };
+        window.__loadTW = function () {
+            if (window.__twLoading) return; window.__twLoading = true;
+            var t = document.createElement('script'); t.src = 'https://cdn.tailwindcss.com/3.4.17';
+            t.onload = function () { tailwind.config = window.__twCfg; };
+            document.head.appendChild(t);
+        };
+    </script>
+    <link rel="stylesheet" href="vendor/tailwind.css" onerror="window.__loadTW()">
+
+    <!-- SheetJS: local primeiro; CDN com versão fixa como fallback -->
+    <script src="vendor/xlsx.full.min.js"></script>
+    <script>window.XLSX || document.write('<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"><\/script>')</script>
+
+    <!-- Ajustes aplicados antes da primeira pintura (tema salvo e animação de abertura) -->
+<script>try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('egx-intro');setTimeout(function(){document.documentElement.classList.remove('egx-intro')},2500)}}catch(e){}</script>
+<script>try{var t=JSON.parse(localStorage.getItem('egx_theme_v1')||'{}'),d=document.documentElement;d.dataset.egxTheme=t.mode||'egx';if(t.tint)d.style.setProperty('--egx-tint',t.tint);if(t.wall!=null)d.style.setProperty('--egx-wall-opacity',t.wall/100);if(t.blur!=null)d.style.setProperty('--egx-glass-blur',t.blur+'px')}catch(e){}</script>
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/polish.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/creator-texts.css">
+    <link rel="stylesheet" href="css/name-suffix.css">
+    <link rel="stylesheet" href="css/tasks.css">
+    <link rel="stylesheet" href="css/launcher.css">
+    <link rel="stylesheet" href="css/app-shell.css">
+</head>
+<body class="bg-black text-slate-200 min-h-screen flex flex-col selection:bg-purple-500/30 selection:text-purple-200 overflow-x-hidden relative">
+
+    <!-- Fixed EGX Wallpaper Background Layer -->
+    <div id="egx-wallpaper-layer" class="fixed inset-0 -z-10 pointer-events-none overflow-hidden bg-black select-none" aria-hidden="true">
+        <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" class="w-full h-full object-cover">
+            <defs>
+                <linearGradient id="egxPurpleBloom" x1="0.65" y1="0.45" x2="0.88" y2="0.95">
+                    <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
+                    <stop offset="45%" stop-color="#4c1d95" stop-opacity="0.22"/>
+                    <stop offset="78%" stop-color="#7e22ce" stop-opacity="0.58"/>
+                    <stop offset="96%" stop-color="#a855f7" stop-opacity="0.88"/>
+                    <stop offset="100%" stop-color="#c084fc" stop-opacity="0.95"/>
+                </linearGradient>
+                <linearGradient id="egxLowerReflection" x1="0.78" y1="0.76" x2="0.95" y2="1">
+                    <stop offset="0%" stop-color="#581c87" stop-opacity="0.65"/>
+                    <stop offset="45%" stop-color="#2e1065" stop-opacity="0.45"/>
+                    <stop offset="100%" stop-color="#090214" stop-opacity="0.9"/>
+                </linearGradient>
+                <linearGradient id="egxBeamStroke" x1="0.58" y1="1" x2="1" y2="0.71">
+                    <stop offset="0%" stop-color="#6b21a8" stop-opacity="0.2"/>
+                    <stop offset="35%" stop-color="#9333ea" stop-opacity="0.85"/>
+                    <stop offset="75%" stop-color="#c084fc" stop-opacity="1"/>
+                    <stop offset="100%" stop-color="#e9d5ff" stop-opacity="1"/>
+                </linearGradient>
+                <filter id="egxBeamBlur" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="18"/>
+                </filter>
+                <filter id="egxSoftBloomBlur" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="55"/>
+                </filter>
+            </defs>
+            <rect width="1920" height="1080" fill="#000000"/>
+            <polygon points="650,1080 1920,420 1920,765 1120,1080" fill="url(#egxPurpleBloom)" filter="url(#egxSoftBloomBlur)"/>
+            <polygon points="980,1080 1920,620 1920,765 1120,1080" fill="url(#egxPurpleBloom)"/>
+            <polygon points="1120,1080 1920,765 1920,1080" fill="url(#egxLowerReflection)"/>
+            <line x1="1060" y1="1104" x2="1940" y2="757" stroke="url(#egxBeamStroke)" stroke-width="24" filter="url(#egxBeamBlur)"/>
+            <line x1="1080" y1="1096" x2="1930" y2="761" stroke="url(#egxBeamStroke)" stroke-width="4.5"/>
+        </svg>
+
+        <img id="egx-wallpaper-img" src="wallpaper-egx.jpg" alt=""
+             onerror="if(!this.dataset.t){this.dataset.t=1;this.src='walpapper%20EGX.jpeg'}else{this.classList.add('hidden')}"
+             class="absolute inset-0 w-full h-full object-cover object-center opacity-95 transition-opacity duration-500">
+
+        <div class="absolute inset-0 bg-gradient-to-r from-black/55 via-black/30 to-transparent"></div>
+    </div>
+
+
+    <!-- Editor de textos do anúncio (Criador de Campanhas) -->
+    <div id="meta-text-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="meta-text-heading">
+        <div class="egx-tm-panel">
+            <div class="egx-tm-head">
+                <div><h2 id="meta-text-heading">Editar textos dos anúncios</h2><p id="meta-text-sub"></p></div>
+                <button type="button" id="meta-text-close" class="egx-tm-x" aria-label="Fechar">✕</button>
+            </div>
+            <div class="egx-tm-presets">
+                <div class="egx-tm-row"><select id="meta-text-preset" class="fld" aria-label="Modelo de texto salvo"></select><button type="button" id="meta-text-preset-del" class="btn-mini" title="Excluir modelo">🗑️</button></div>
+                <div class="egx-tm-row"><input id="meta-text-preset-name" class="fld" placeholder="Nome do modelo (ex.: Oferta frete grátis)"><button type="button" id="meta-text-preset-save" class="btn-mini">💾 Salvar modelo</button></div>
+            </div>
+            <div class="egx-tm-field">
+                <label><input type="checkbox" id="meta-text-use-body"> Texto principal <span id="meta-text-body-count" class="egx-tm-count">0/125</span></label>
+                <textarea id="meta-text-body" class="fld" rows="4"></textarea>
+            </div>
+            <div class="egx-tm-field">
+                <label><input type="checkbox" id="meta-text-use-title"> Título <span id="meta-text-title-count" class="egx-tm-count">0/40</span></label>
+                <input id="meta-text-title-input" class="fld">
+            </div>
+            <div class="egx-tm-field">
+                <label><input type="checkbox" id="meta-text-use-cta"> Chamada para ação</label>
+                <select id="meta-text-cta" class="fld"></select>
+            </div>
+            <p class="egx-tm-hint">Só os campos marcados são alterados. Um campo marcado e vazio volta ao padrão.</p>
+            <div class="egx-tm-actions">
+                <button type="button" id="meta-text-clear" class="btn-mini">Limpar textos</button>
+                <span class="egx-tm-spacer"></span>
+                <button type="button" id="meta-text-cancel" class="btn-mini">Cancelar</button>
+                <button type="button" id="meta-text-apply" class="egx-tm-primary">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Notification Container -->
+    <div id="global-toast-container" role="status" aria-live="polite" class="fixed top-4 right-4 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+
+<div id="egx-launcher" aria-label="Central de projetos EGX">
+ <div class="max-w-6xl w-full mx-auto flex flex-col gap-7 my-auto">
+  <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+   <div class="flex items-center gap-4">
+    <div class="rounded-2xl border border-purple-400/30 bg-purple-950/50 p-4 text-3xl">✦</div>
+    <div><p class="text-xs uppercase tracking-[.25em] text-purple-300 font-bold">EGX WORKSPACE</p><h1 class="text-3xl md:text-4xl font-black text-white mt-1">Central de projetos</h1><p class="text-slate-400 mt-2">Seu ambiente de trabalho local, organizado em um só lugar.</p></div>
+   </div>
+   <div class="flex gap-2 flex-wrap"><button id="egx-launch-settings" class="egx-launcher-btn">⚙ Perfil e espaço de trabalho</button><button id="egx-launch-enter" class="egx-launcher-btn">Abrir EGX sem projeto</button></div>
+  </div>
+  <div class="grid lg:grid-cols-[1.25fr_.75fr] gap-5">
+   <section class="egx-launcher-card p-5 md:p-6 flex flex-col gap-4">
+    <div class="flex items-center justify-between gap-3"><div><h2 class="font-bold text-white text-lg">Projetos recentes</h2><p class="text-xs text-slate-400 mt-1">Abra um projeto ou crie um novo espaço de trabalho.</p></div><span id="egx-project-count" class="text-xs rounded-full px-3 py-1 bg-slate-800 text-slate-300">0 projetos</span></div>
+    <div id="egx-project-list" class="grid sm:grid-cols-2 gap-3"></div>
+    <div id="egx-project-empty" class="border border-dashed border-slate-600/70 rounded-xl p-7 text-center"><div class="text-3xl mb-2">📁</div><p class="font-semibold text-slate-200">Ainda não há projetos</p><p class="text-sm text-slate-400 mt-1">Crie seu primeiro projeto para começar a organizar seus trabalhos.</p></div>
+    <div class="flex flex-col sm:flex-row gap-2 pt-1"><input id="egx-project-name" class="flex-1 min-w-0 bg-slate-950/70 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-purple-500" placeholder="Nome do novo projeto (ex.: LINFLORA)"/><button id="egx-project-create" class="egx-launcher-btn primary">＋ Criar projeto</button></div>
+   </section>
+   <aside class="flex flex-col gap-4">
+    <section class="egx-launcher-card p-5"><p class="text-xs uppercase tracking-wider text-slate-400 font-bold">Perfil local</p><div class="flex items-center gap-3 mt-3"><div class="w-11 h-11 rounded-full bg-purple-900/60 border border-purple-400/30 flex items-center justify-center text-lg">👤</div><div><h3 id="egx-profile-label" class="font-bold text-white">Meu perfil</h3><p class="text-xs text-slate-400">Este perfil existe neste computador</p></div></div><button id="egx-profile-edit" class="egx-launcher-btn w-full mt-4">Editar nome do perfil</button></section>
+    <section class="egx-launcher-card p-5"><p class="text-xs uppercase tracking-wider text-slate-400 font-bold">Armazenamento</p><div class="flex items-center gap-3 mt-3"><div class="text-2xl">🗂️</div><div class="min-w-0"><h3 id="egx-workspace-label" class="font-semibold text-white truncate">Armazenamento do navegador</h3><p id="egx-workspace-status" class="text-xs text-slate-400 mt-1">Nenhuma pasta vinculada</p></div></div><button id="egx-workspace-select" class="egx-launcher-btn w-full mt-4">Selecionar pasta do Workspace</button><button id="egx-workspace-change" type="button" class="egx-launcher-btn w-full mt-2 hidden">Trocar pasta</button><p class="text-[11px] leading-relaxed text-slate-500 mt-3">A pasta é opcional. Sem ela, a lista de projetos e configurações ficam no armazenamento local deste navegador.</p></section>
+   </aside>
+  </div>
+  <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500"><span>EGX Bulk Builder · ambiente local</span><span>Seus dados não são enviados a um servidor.</span></div>
+ </div>
+</div>
+
+    <!-- =====================================================================
+         TOP BRANDING HEADER & ISOLATED MODULE NAVIGATION TABS
+         ===================================================================== -->
+    <header class="bg-egx-bg/80 backdrop-blur-md border-b border-purple-500/20 shadow-xl z-30 shrink-0">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-0 flex flex-col gap-4">
+
+            <!-- Brand Logo & Application Title Row -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="bg-black border border-slate-800 rounded-xl px-4 py-2.5 shadow-lg flex items-center justify-center shrink-0 select-none">
+                        <svg viewBox="0 0 420 145" class="w-[155px] sm:w-[175px] h-auto" role="img" aria-label="Grupo EGX Global Brands">
+                            <text x="210" y="23" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="13.5" font-weight="600" letter-spacing="12" text-anchor="middle">GRUPO</text>
+                            <path d="M 24 38 H 136 V 58 H 64 V 67 H 124 V 85 H 64 V 94 H 136 V 114 H 24 Z" fill="#FFFFFF"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="
+                                M 164 38 H 264 V 58 H 184 V 94 H 222 L 210 114 H 164 L 146 96 V 56 Z
+                                M 212 65 H 274 V 98 L 256 114 H 228 L 238 92 H 214 L 204 108 L 194 90 L 206 76 L 195 74 Z
+                            " fill="#FFFFFF"/>
+                            <polygon points="214,72 224,72 220,76" fill="#000000"/>
+                            <polygon points="274,38 314,38 338,63 362,38 400,38 358,76 402,114 362,114 338,89 314,114 274,114 318,76" fill="#FFFFFF"/>
+                            <text x="212" y="137" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600" letter-spacing="7.2" text-anchor="middle">GLOBAL BRANDS</text>
+                        </svg>
+                    </div>
+
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-extrabold text-white tracking-tight leading-snug">
+                            EGX Bulk Builder — Operações Meta Ads
+                        </h1>
+                        <p class="text-xs sm:text-sm text-slate-400 mt-0.5">
+                            Organize criativos, monte campanhas e edite exportações Meta Ads em um fluxo mais simples
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button id="egx-pwa-install-btn" type="button"
+                            class="cursor-pointer text-xs font-bold text-emerald-200 hover:text-white bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-500/40 px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 shadow-sm"
+                            title="Instalar EGX Bulk Builder como Aplicativo Desktop">
+                        <span>📲 Instalar App</span>
+                    </button>
+
+                    <div id="egx-appearance" class="relative">
+                        <button id="egx-appearance-btn" type="button" aria-expanded="false" aria-controls="egx-appearance-panel"
+                                class="cursor-pointer text-xs font-semibold text-purple-200 hover:text-white bg-purple-950/60 hover:bg-purple-900/70 border border-purple-500/40 px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 shadow-sm"
+                                title="Tema, cores e imagem de fundo">
+                            <span>🎨 Aparência</span>
+                        </button>
+                        <div id="egx-appearance-panel" class="hidden" role="dialog" aria-label="Aparência">
+                            <div class="egx-ap-sec">
+                                <p class="egx-ap-label">Tema</p>
+                                <div class="egx-ap-themes">
+                                    <button type="button" data-egx-theme="egx"><i class="egx-ap-prev prev-egx"></i><b>Padrão EGX</b><small>Painéis escuros</small></button>
+                                    <button type="button" data-egx-theme="glass"><i class="egx-ap-prev prev-glass"></i><b>Liquid Glass</b><small>Vidro claro com desfoque</small></button>
+                                    <button type="button" data-egx-theme="tint"><i class="egx-ap-prev prev-tint"></i><b>Vidro colorido</b><small>Desfoque com a cor escolhida</small></button>
+                                    <button type="button" data-egx-theme="solid"><i class="egx-ap-prev prev-solid"></i><b>Cor sólida</b><small>Sem transparência, mais leve</small></button>
+                                </div>
+                            </div>
+                            <div class="egx-ap-sec">
+                                <p class="egx-ap-label">Cor</p>
+                                <div class="egx-ap-swatches">
+                                    <button type="button" data-egx-tint="#8b5cf6" style="--sw:#8b5cf6" title="Roxo EGX" aria-label="Roxo EGX"></button>
+                                    <button type="button" data-egx-tint="#3b82f6" style="--sw:#3b82f6" title="Azul" aria-label="Azul"></button>
+                                    <button type="button" data-egx-tint="#06b6d4" style="--sw:#06b6d4" title="Ciano" aria-label="Ciano"></button>
+                                    <button type="button" data-egx-tint="#10b981" style="--sw:#10b981" title="Esmeralda" aria-label="Esmeralda"></button>
+                                    <button type="button" data-egx-tint="#ec4899" style="--sw:#ec4899" title="Rosa" aria-label="Rosa"></button>
+                                    <button type="button" data-egx-tint="#f59e0b" style="--sw:#f59e0b" title="Âmbar" aria-label="Âmbar"></button>
+                                    <button type="button" data-egx-tint="#64748b" style="--sw:#64748b" title="Grafite" aria-label="Grafite"></button>
+                                </div>
+                            </div>
+                            <div class="egx-ap-sec">
+                                <p class="egx-ap-label">Imagem de fundo</p>
+                                <div class="egx-ap-row">
+                                    <label for="egx-wallpaper-picker" class="egx-ap-btn">🖼️ Escolher imagem
+                                        <input type="file" id="egx-wallpaper-picker" accept="image/*" class="hidden">
+                                    </label>
+                                    <button type="button" id="egx-wallpaper-remove" class="egx-ap-btn">Remover</button>
+                                </div>
+                                <label class="egx-ap-range">Intensidade do fundo <input type="range" id="egx-wall-opacity" min="15" max="100" step="5"></label>
+                                <label class="egx-ap-range" id="egx-glass-blur-wrap">Desfoque do vidro <input type="range" id="egx-glass-blur" min="6" max="40" step="2"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hidden xl:flex items-center gap-2 text-xs text-slate-300 bg-black/70 border border-slate-800 px-3.5 py-2 rounded-xl">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>Execução 100% Local • Exportação .XLSX Nativa</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tab Bar (3 Completely Isolated Modules) -->
+            <nav class="flex items-center gap-2 overflow-x-auto pt-1" role="tablist" aria-label="Módulos do Sistema">
+                <button id="nav-tab-dashboard" type="button" role="tab" aria-selected="true" aria-controls="egx-project-dashboard" class="tab-btn">
+                    <span>⌂ Visão geral</span>
+                </button>
+                <button id="nav-tab-meta" type="button" role="tab" aria-selected="false" aria-controls="module-meta-ads"
+                        class="tab-btn">
+                    <span>📊 Criar campanhas</span>
+                </button>
+                <button id="nav-tab-extractor" type="button" role="tab" aria-selected="false" aria-controls="module-extractor"
+                        class="tab-btn">
+                    <span>🧹 Organizar criativos</span>
+                </button>
+                <button id="nav-tab-bulk-editor" type="button" role="tab" aria-selected="false" aria-controls="module-bulk-editor"
+                        class="tab-btn">
+                    <span>🗂️ Editar planilha</span>
+                </button>
+                <button id="nav-tab-tasks" type="button" role="tab" aria-selected="false" aria-controls="module-tasks"
+                        class="tab-btn">
+                    <span>📝 Tarefas do dia</span>
+                </button>
+                <div class="ml-auto flex items-center gap-2 pb-1.5 pl-3 shrink-0"><span id="egx-save-status" class="egx-save-status hidden" data-state="idle" aria-live="polite" title="Ctrl+S salva agora"></span><span id="egx-active-project-pill" class="hidden text-xs text-purple-200 bg-purple-950/40 border border-purple-500/30 rounded-lg px-3 py-1.5"></span><button id="egx-return-launcher" type="button" class="text-xs text-slate-400 hover:text-white border border-slate-700 hover:border-purple-500/50 rounded-lg px-3 py-1.5 whitespace-nowrap">⌂ Central de projetos</button></div>
+            </nav>
+
+        </div>
+    </header>
+
+    <!-- EGX Project Dashboard -->
+    <section id="egx-project-dashboard" role="tabpanel" class="flex flex-col animate-fade-in">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div><p class="text-xs uppercase tracking-[.18em] text-purple-300 font-bold">Painel do projeto</p><h1 id="egx-dash-title" class="text-3xl font-black text-white mt-1">Visão geral</h1><p id="egx-dash-subtitle" class="text-slate-400 mt-2">Acompanhe seu trabalho e acesse as ferramentas.</p></div>
+        <div class="flex gap-2 flex-wrap"><button id="egx-dash-open-launcher" class="egx-launcher-btn">↩ Trocar projeto</button><button id="egx-dash-refresh" class="egx-launcher-btn">⟳ Atualizar</button><button id="egx-dash-shortcuts" class="egx-launcher-btn" title="Atalhos de teclado (?)">⌨ Atalhos</button></div>
+      </div>
+
+      <!-- Busca no projeto -->
+      <section class="egx-dash-card p-4">
+        <input id="egx-dash-search" type="search" class="egx-search-input" placeholder="Buscar no projeto: tarefas, campanhas exportadas, criativos, atividades… (Ctrl+K)" aria-label="Buscar no projeto">
+        <div id="egx-dash-search-results" class="hidden mt-3 flex flex-col"></div>
+      </section>
+
+      <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <article class="egx-dash-card p-4"><p class="text-xs text-slate-400">Tarefas de hoje</p><p id="egx-dash-tasks-count" class="egx-dash-stat text-3xl font-black text-white mt-2">0</p><p id="egx-dash-tasks-detail" class="text-xs text-slate-500 mt-1">Pendentes</p></article>
+        <article class="egx-dash-card p-4"><p class="text-xs text-slate-400">Criativos no Criador</p><p id="egx-dash-creator-count" class="egx-dash-stat text-3xl font-black text-white mt-2">0</p><p id="egx-dash-creator-detail" class="text-xs text-slate-500 mt-1">Itens carregados</p></article>
+        <article class="egx-dash-card p-4"><p class="text-xs text-slate-400">Planilha no Editor</p><p id="egx-dash-bulk-count" class="egx-dash-stat text-3xl font-black text-white mt-2">0</p><p id="egx-dash-bulk-detail" class="text-xs text-slate-500 mt-1">Nenhuma planilha aberta</p></article>
+        <article class="egx-dash-card p-4"><p class="text-xs text-slate-400">Exportações</p><p id="egx-dash-exports-count" class="egx-dash-stat text-3xl font-black text-white mt-2">0</p><p id="egx-dash-exports-detail" class="text-xs text-slate-500 mt-1">Nenhuma ainda</p></article>
+      </div>
+
+      <div class="grid xl:grid-cols-[1.25fr_.75fr] gap-4">
+        <section class="egx-dash-card p-5"><div class="flex items-center justify-between gap-3"><div><h2 class="text-lg font-bold text-white">Acesso rápido</h2><p class="text-sm text-slate-400 mt-1">Continue de onde parou ou escolha uma ferramenta.</p></div><span class="text-xs text-slate-500">EGX Workspace</span></div>
+          <div class="grid sm:grid-cols-2 gap-3 mt-4">
+            <button type="button" data-egx-dash-module="nav-tab-meta" class="egx-dash-shortcut egx-dash-card p-4 text-left"><div class="text-2xl">📊</div><h3 class="font-bold text-white mt-2">Criar campanhas</h3><p class="text-xs text-slate-400 mt-1">Montar campanhas e organizar criativos por oferta.</p><span class="inline-block text-xs text-purple-300 mt-3">Abrir ferramenta → <span class="egx-kbd">Ctrl 2</span></span></button>
+            <button type="button" data-egx-dash-module="nav-tab-extractor" class="egx-dash-shortcut egx-dash-card p-4 text-left"><div class="text-2xl">🧹</div><h3 class="font-bold text-white mt-2">Organizar criativos</h3><p class="text-xs text-slate-400 mt-1"><span id="egx-dash-extractor-count">0</span> criativo(s) na última extração.</p><span class="inline-block text-xs text-purple-300 mt-3">Abrir ferramenta → <span class="egx-kbd">Ctrl 3</span></span></button>
+            <button type="button" data-egx-dash-module="nav-tab-bulk-editor" class="egx-dash-shortcut egx-dash-card p-4 text-left"><div class="text-2xl">🗂️</div><h3 class="font-bold text-white mt-2">Editar planilha</h3><p class="text-xs text-slate-400 mt-1">Importar, revisar e editar exportações do Meta Ads.</p><span class="inline-block text-xs text-purple-300 mt-3">Abrir ferramenta → <span class="egx-kbd">Ctrl 4</span></span></button>
+            <button type="button" data-egx-dash-module="nav-tab-tasks" class="egx-dash-shortcut egx-dash-card p-4 text-left"><div class="text-2xl">📝</div><h3 class="font-bold text-white mt-2">Tarefas do dia</h3><p class="text-xs text-slate-400 mt-1">O que fazer hoje neste projeto.</p><span class="inline-block text-xs text-purple-300 mt-3">Abrir ferramenta → <span class="egx-kbd">Ctrl 5</span></span></button>
+          </div>
+          <div class="egx-dash-card p-4 mt-3"><div class="flex items-start gap-3"><div class="text-2xl">📁</div><div class="min-w-0 flex-1"><h3 class="font-bold text-white">Projeto atual</h3><p id="egx-dash-project-info" class="text-xs text-slate-400 mt-1">Nenhum projeto ativo.</p><p class="text-xs text-slate-500 mt-1"><span id="egx-dash-project-created"></span> · <span id="egx-dash-storage">Local</span> — <span id="egx-dash-storage-detail">Dados salvos neste navegador</span></p><p class="text-xs text-slate-500 mt-1">Última atividade: <span id="egx-dash-last-activity">Nenhuma</span> <span id="egx-dash-last-activity-date"></span></p></div></div></div>
+        </section>
+        <section class="egx-dash-card p-5"><div class="flex items-center justify-between gap-3"><div><h2 class="text-lg font-bold text-white">Atividade recente</h2><p class="text-sm text-slate-400 mt-1">Ações importantes neste projeto.</p></div><button id="egx-dash-clear-activity" class="text-xs text-slate-500 hover:text-slate-300">Limpar</button></div><div id="egx-dash-activity-list" class="mt-3 flex flex-col"><div class="py-5 text-sm text-slate-500">Nenhuma atividade registrada ainda.</div></div></section>
+      </div>
+
+      <div class="grid xl:grid-cols-2 gap-4">
+        <section class="egx-dash-card p-5"><div class="flex items-center justify-between gap-3"><div><h2 class="text-lg font-bold text-white">Exportações recentes</h2><p class="text-sm text-slate-400 mt-1">Planilhas geradas neste projeto (cópia em <code>Exports/</code> quando a pasta está vinculada).</p></div></div><div id="egx-dash-exports-list" class="mt-3 flex flex-col"><div class="py-5 text-sm text-slate-500">Nenhuma exportação registrada ainda.</div></div></section>
+        <section class="egx-dash-card p-5"><div class="flex items-center justify-between gap-3"><div><h2 class="text-lg font-bold text-white">Backups</h2><p class="text-sm text-slate-400 mt-1">Cópia automática ao abrir o projeto (no máximo 1 por hora; mantém os 20 mais recentes).</p></div><button id="egx-dash-backup-now" class="egx-mini-btn">+ Criar backup agora</button></div><div id="egx-dash-backups-list" class="mt-3 flex flex-col"><div class="py-5 text-sm text-slate-500">Nenhum backup ainda.</div></div></section>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         MODULE 1: 📊 GERENCIADOR META ADS
+         ===================================================================== -->
+    <div id="module-meta-ads" role="tabpanel" class="flex-1 flex flex-col lg:flex-row max-w-[1600px] w-full mx-auto animate-fade-in">
+
+        <!-- Left Sidebar: Campaign & Ad Set Configuration Panel -->
+        <aside class="lg:sticky lg:top-0 lg:self-start lg:max-h-screen lg:overflow-y-auto w-full lg:w-[375px] xl:w-[405px] bg-egx-bg/75 backdrop-blur-md border-b lg:border-b-0 lg:border-r border-purple-500/20 p-5 sm:p-6 flex flex-col gap-5 shrink-0">
+
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-300">Configurações da Estrutura</h2>
+                <span id="meta-sidebar-mode-badge" class="mbadge on-indigo">
+                    Catálogo
+                </span>
+            </div>
+
+            <!-- Saved Profiles (Presets) -->
+            <div class="space-y-2 rounded-xl border border-egx-border bg-black/30 p-3">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Presets (perfis salvos)</div>
+                <div class="flex gap-2">
+                    <select id="meta-preset-sel" class="fld flex-1 min-w-0" aria-label="Preset"><option value="">— Selecionar preset —</option></select>
+                    <button id="meta-preset-del" type="button" class="btn-mini" title="Excluir preset" aria-label="Excluir preset">🗑️</button>
+                </div>
+                <div class="flex gap-2">
+                    <input id="meta-preset-name" type="text" placeholder="Nome do novo preset" class="fld flex-1 min-w-0" aria-label="Nome do preset">
+                    <button id="meta-preset-save" type="button" class="btn-mini">💾 Salvar</button>
+                </div>
+            </div>
+
+            <!-- Form Controls -->
+            <div class="space-y-4">
+
+                <!-- Nome da Campanha + Construtor Automático EGX -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label for="meta-camp-name" class="block text-xs font-semibold text-slate-300">
+                            Nome da Campanha <span class="text-slate-400 font-normal">(Campaign Name)</span>
+                        </label>
+                        <button id="meta-date-prefix" type="button" class="text-[11px] text-indigo-300 hover:text-white underline">📅 Data Hoje</button>
+                    </div>
+                    <input type="text" id="meta-camp-name"
+                           placeholder="Ex: 19_11_26_BM51_CA03_TADS_IMG_CBO#1_LINFLORA_BR_DR"
+                           class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 placeholder-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+
+                    <!-- Collapsible Campaign Name Builder -->
+                    <details id="meta-name-builder" class="rounded-xl border border-indigo-500/30 bg-indigo-950/20 overflow-hidden">
+                        <summary class="px-3 py-2 text-[11px] font-bold text-indigo-300 cursor-pointer flex items-center justify-between select-none hover:bg-indigo-950/40 transition-colors list-none">
+                            <span>🏗️ Construtor Automático de Nome EGX</span>
+                            <span class="chev text-xs transition-transform duration-200">▼</span>
+                        </summary>
+                        <div class="p-3 pt-2 border-t border-indigo-500/20 space-y-2.5 bg-black/30">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-0.5">Data</label>
+                                    <input id="nb-date" type="text" placeholder="19_11_26" class="fld w-full text-xs px-2 py-1.5 font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-0.5">BM</label>
+                                    <input id="nb-bm" type="text" placeholder="BM51" class="fld w-full text-xs px-2 py-1.5 font-mono uppercase">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-0.5">Conta (CA)</label>
+                                    <input id="nb-ca" type="text" placeholder="CA03" class="fld w-full text-xs px-2 py-1.5 font-mono uppercase">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-0.5">Tag / Fonte</label>
+                                    <input id="nb-tag" type="text" value="TADS" placeholder="TADS" class="fld w-full text-xs px-2 py-1.5 font-mono uppercase">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-0.5">Produto / Marca</label>
+                                    <input id="nb-prod" type="text" placeholder="LINFLORA" class="fld w-full text-xs px-2 py-1.5 font-mono uppercase">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-0.5">País</label>
+                                    <input id="nb-country" type="text" value="BR" placeholder="BR" class="fld w-full text-xs px-2 py-1.5 font-mono uppercase">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 items-end">
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-0.5">Sufixo Final</label>
+                                    <input id="nb-suffix" type="text" value="DR" placeholder="DR" class="fld w-full text-xs px-2 py-1.5 font-mono uppercase">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-0.5">Número (#)</label>
+                                    <div class="flex items-center gap-1">
+                                        <button id="nb-num-dec" type="button" class="btn-mini px-2.5 py-1.5 font-bold" aria-label="Diminuir número">−</button>
+                                        <input id="nb-num" type="number" value="1" min="1" class="fld w-full text-xs px-2 py-1.5 text-center font-mono font-bold">
+                                        <button id="nb-num-inc" type="button" class="btn-mini px-2.5 py-1.5 font-bold" aria-label="Aumentar número">+</button>
+                                        <button id="nb-num-auto" type="button" class="btn-mini px-2 py-1.5 font-bold text-[10px]" title="Usar o próximo número livre, com base nas campanhas já exportadas neste projeto">Próx.</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="nb-apply" type="button"
+                                    class="w-full bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5">
+                                <span>⚡ Montar Nome da Campanha</span>
+                            </button>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Estratégia de Orçamento / Lance -->
+                <div>
+                    <label for="meta-strategy" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Estratégia de Orçamento / Lance
+                    </label>
+                    <select id="meta-strategy"
+                            class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all cursor-pointer">
+                        <option value="CBO">CBO (Volume Mais Alto)</option>
+                        <option value="BID">BID (Limite de Lance / Bid Cap)</option>
+                        <option value="ABO">ABO (Orçamento no Conjunto)</option>
+                    </select>
+                </div>
+
+                <!-- Orçamento Diário & Limite de Lance (Bid Amount) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="meta-budget" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                            Orçamento Diário (R$ / $)
+                        </label>
+                        <input type="number" id="meta-budget" value="50" min="1" step="0.01"
+                               class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+                    </div>
+
+                    <div id="meta-bid-wrapper" class="hidden animate-fade-in">
+                        <label for="meta-bid-amount" class="block text-xs font-semibold text-amber-400 mb-1.5">
+                            Limite de Lance (Bid)
+                        </label>
+                        <input type="number" id="meta-bid-amount" value="25" min="0.01" step="0.01"
+                               class="w-full bg-egx-bg border border-amber-500/60 rounded-xl text-sm px-3.5 py-2.5 text-amber-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20 outline-none transition-all">
+                    </div>
+                </div>
+
+                <!-- Faixa Etária: Idade Mínima & Idade Máxima -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="meta-age-min" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                            Idade Mínima
+                        </label>
+                        <select id="meta-age-min"
+                                class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 focus:border-indigo-500 outline-none cursor-pointer"></select>
+                    </div>
+                    <div>
+                        <label for="meta-age-max" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                            Idade Máxima
+                        </label>
+                        <select id="meta-age-max"
+                                class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 focus:border-indigo-500 outline-none cursor-pointer"></select>
+                    </div>
+                </div>
+
+                <!-- Nome do Conjunto (Visible ONLY in Image Mode) -->
+                <div id="meta-img-adset-name-wrapper" class="hidden animate-fade-in">
+                    <label for="meta-img-adset-name" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Nome do Conjunto <span class="text-purple-400 font-bold">(Ad Set Name)</span>
+                    </label>
+                    <input type="text" id="meta-img-adset-name" value="IMGs"
+                           placeholder="Ex: IMGs ou CONJUNTO_01"
+                           class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 placeholder-slate-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all">
+                </div>
+
+                <!-- Gênero do Conjunto IMGs (Visible ONLY in Image Mode) -->
+                <div id="meta-img-gender-wrapper" class="hidden animate-fade-in">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="meta-img-adset-gender" class="text-xs font-semibold text-slate-300">
+                            Gênero do Conjunto <span class="text-purple-400 font-bold">IMGs</span>
+                        </label>
+                        <span id="meta-img-gender-pill" class="text-[10px] font-bold px-2 py-0.5 rounded-full border g-a">
+                            Ambos (Aberto)
+                        </span>
+                    </div>
+                    <select id="meta-img-adset-gender"
+                            class="w-full border rounded-xl text-sm px-3.5 py-2.5 font-semibold outline-none cursor-pointer transition-colors g-a">
+                        <option class="bg-slate-900 text-white" value="Ambos">Ambos (Aberto)</option>
+                        <option class="bg-slate-900 text-white" value="Masculino">Masculino</option>
+                        <option class="bg-slate-900 text-white" value="Feminino">Feminino</option>
+                    </select>
+                </div>
+
+                <!-- Link de Destino -->
+                <div>
+                    <label for="meta-link" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Link de Destino <span class="text-slate-400 font-normal">(Link)</span>
+                    </label>
+                    <input type="url" id="meta-link"
+                           placeholder="https://..."
+                           class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 font-mono placeholder-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+                </div>
+
+                <!-- Parâmetros de URL (UTM) -->
+                <div>
+                    <label for="meta-url-tags" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                        Parâmetros de URL (UTM) <span class="text-slate-400 font-normal">(URL Tags)</span>
+                    </label>
+                    <textarea id="meta-url-tags" rows="3"
+                              class="w-full bg-egx-bg border border-egx-border rounded-xl text-xs px-3.5 py-2.5 text-slate-300 font-mono focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none resize-y leading-relaxed">sub1={{ad.id}}&sub2={{adset.id}}&sub3={{campaign.id}}&sub4={{ad.name}}&sub5={{adset.name}}&sub6={{campaign.name}}&sub7={{placement}}&sub8={{site_source_name}}&utm_source=facebook&utm_medium=paid</textarea>
+                </div>
+
+                <!-- Conta Meta (IDs exigidos pelo importador) -->
+                <div class="rounded-xl border border-indigo-500/30 bg-indigo-950/20 p-3.5 flex flex-col gap-3">
+                    <div>
+                        <p class="text-xs font-extrabold uppercase tracking-wider text-indigo-300">Conta Meta</p>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">IDs da Página, Instagram, Pixel e beneficiário. Pode colar com ou sem o prefixo da exportação (o:, x:, tp:).</p>
+                    </div>
+                    <div>
+                        <label for="meta-page-id" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                            ID da Página <span class="text-slate-400 font-normal">(Link Object ID)</span>
+                        </label>
+                        <input type="text" id="meta-page-id" inputmode="numeric" placeholder="o:1383579748173470" class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 font-mono placeholder-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label for="meta-ig-id" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                            ID da conta do Instagram <span class="text-slate-400 font-normal">(Instagram Account ID)</span>
+                        </label>
+                        <input type="text" id="meta-ig-id" inputmode="numeric" placeholder="x:29092249137058759" class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 font-mono placeholder-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label for="meta-pixel-id" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                            ID do Pixel <span class="text-slate-400 font-normal">(Conversion Tracking Pixels)</span>
+                        </label>
+                        <input type="text" id="meta-pixel-id" inputmode="numeric" placeholder="tp:1851397046017305" class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 font-mono placeholder-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label for="meta-beneficiary" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                            Beneficiário e pagador <span class="text-slate-400 font-normal">(Beneficiary / Payer)</span>
+                        </label>
+                        <input type="text" id="meta-beneficiary" inputmode="numeric" placeholder="1795422947859112" class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3.5 py-2.5 text-slate-100 font-mono placeholder-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label for="meta-attribution" class="block text-xs font-semibold text-slate-300 mb-1.5">
+                            Janela de atribuição <span class="text-slate-400 font-normal">(Attribution Spec)</span>
+                        </label>
+                        <select id="meta-attribution" class="w-full bg-egx-bg border border-egx-border rounded-xl text-sm px-3 py-2.5 text-slate-100 outline-none focus:border-indigo-500">
+                            <option class="bg-slate-900 text-white" value="click7_view1">7 dias clique + 1 dia visualização</option>
+                            <option class="bg-slate-900 text-white" value="click7_view1_engaged1">7d clique + 1d visualização + 1d visualização engajada</option>
+                        </select>
+                    </div>
+                </div>
+
+            </div>
+        </aside>
+
+        <!-- Main Right Workspace of Tab 1 -->
+        <main class="flex-1 p-5 sm:p-6 lg:p-8 flex flex-col gap-5 min-w-0">
+
+            <!-- Top Mode Switcher Pill Toggle -->
+            <div class="bg-egx-panel/75 backdrop-blur-md border border-purple-500/25 rounded-2xl p-3.5 sm:p-4 shadow-xl flex flex-col gap-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="inline-flex bg-egx-bg p-1.5 rounded-xl border border-egx-border w-full sm:w-auto">
+                        <button id="meta-btn-mode-catalog" type="button"
+                                class="seg flex items-center justify-center gap-2 on-indigo">
+                            <span>🛍️ Modo Catálogo</span>
+                        </button>
+                        <button id="meta-btn-mode-image" type="button"
+                                class="seg flex items-center justify-center gap-2">
+                            <span>🖼️ Modo Imagem</span>
+                        </button>
+                    </div>
+
+                    <!-- Step Pill Breadcrumb -->
+                    <div class="flex items-center gap-2 self-start sm:self-center">
+                        <span id="meta-step-pill-1" class="pill on">
+                            Passo 1: Entrada
+                        </span>
+                        <span class="text-slate-600 text-xs">→</span>
+                        <span id="meta-step-pill-2" class="pill">
+                            Passo 2: Conferência
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Structure Info Banner -->
+                <div id="meta-info-banner-catalog" class="text-xs text-slate-400 px-1 flex items-center gap-2.5">
+                    <span class="text-indigo-400 font-bold shrink-0">ℹ️ Catálogo:</span>
+                    <span>1 Campanha → 1 Conjunto por Anúncio (<code class="text-indigo-300">Ad Set = Ad</code>) → Posicionamentos Manuais (Feed, Story, Reels).</span>
+                </div>
+
+                <div id="meta-info-banner-image" class="hidden text-xs text-purple-200/90 px-1 flex items-center gap-2.5 animate-fade-in">
+                    <span class="text-purple-400 font-bold shrink-0">✨</span>
+                    <span>Estrutura Imagem: 1 Campanha (CBO, BID ou ABO) → 1 Conjunto único <strong>'IMGs'</strong> → Posicionamento Advantage+ → Sufixo opcional (ex.: <strong>_IMG</strong>) aplicado pela tabela</span>
+                </div>
+            </div>
+
+            <!-- STEP 1: Raw Input Area -->
+            <section id="meta-step-1" class="flex-1 flex flex-col gap-4 animate-fade-in">
+                <div class="bg-egx-panel/75 backdrop-blur-md border border-purple-500/25 rounded-2xl shadow-xl flex flex-col flex-1 overflow-hidden focus-within:border-purple-500/70 transition-colors">
+                    <div class="px-5 py-3.5 border-b border-egx-border/80 bg-egx-card/60 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-xs font-extrabold uppercase tracking-wider text-indigo-400">
+                                Passo 1: Entrada Bruta (Cole a Lista de Criativos)
+                            </h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                Remove todos os espaços automaticamente, identifica <code class="text-slate-300">Masculino</code>, <code class="text-slate-300">Feminino</code> ou <code class="text-slate-300">Ambos</code> e aplica regras do modo ativo.
+                            </p>
+                        </div>
+                        <button id="meta-btn-clear-raw" type="button"
+                                class="text-xs font-semibold text-slate-400 hover:text-slate-200 bg-egx-bg hover:bg-slate-800 border border-egx-border px-3 py-1.5 rounded-lg transition-colors">
+                            Limpar Texto
+                        </button>
+                    </div>
+
+                    <div id="egx-creative-filter" class="px-5 pt-4 pb-4 border-b border-egx-border/60 flex flex-col gap-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div><p class="text-xs font-bold text-cyan-200">Prefixos dos anúncios</p><p class="text-[11px] text-slate-400">Digite os prefixos que identificam os anúncios desta oferta. Só os códigos com esses prefixos são processados.</p></div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input id="egx-filter-prefix-input" class="fld flex-1 text-xs font-mono" placeholder="Prefixo (ex.: LFRAD, MSPBRAD) — separados por vírgula">
+                            <button id="egx-filter-add" type="button" class="text-xs font-semibold px-3 py-2 rounded-lg border border-cyan-500/30 bg-cyan-950/40 hover:bg-cyan-900/50 text-cyan-200">Aplicar prefixos</button>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5"><span class="text-[11px] text-slate-400 mr-1">Ativos:</span><span id="egx-filter-chip-list" class="flex flex-wrap gap-1.5"></span><span id="egx-filter-empty" class="text-[11px] text-slate-500">Nenhum prefixo definido.</span></div>
+                        <div id="egx-filter-feedback" class="hidden text-xs rounded-lg px-3 py-2 border"></div>
+                    </div>
+
+                    <textarea id="meta-raw-textarea"
+                              class="w-full flex-1 min-h-[280px] lg:min-h-[340px] bg-transparent p-5 text-sm text-slate-100 font-mono leading-relaxed placeholder-slate-600 focus:outline-none resize-y"
+                              placeholder="Cole sua lista de anúncios... (Ctrl + Enter para processar)&#10;&#10;Exemplos:&#10;LFRAD744 - V1 - MASCULINO - Produto A&#10;MSPBRAD14 - FEMININO&#10;ABC123 - AMBOS&#10;&#10;O filtro acima detecta prefixos automaticamente ou permite configurá-los."></textarea>
+                </div>
+
+                <button id="meta-btn-process" type="button"
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.995] text-white font-bold text-sm sm:text-base py-4 px-6 rounded-2xl shadow-lg shadow-indigo-600/25 transition-all flex items-center justify-center gap-2.5">
+                    <span>⚡ Processar Lista</span>
+                </button>
+            </section>
+
+            <!-- STEP 2: Editable Double-Check Table -->
+            <section id="meta-step-2" class="hidden flex-1 flex-col gap-4">
+                <div class="bg-egx-panel/75 backdrop-blur-md border border-purple-500/25 rounded-2xl shadow-xl flex flex-col flex-1 overflow-hidden">
+
+                    <!-- Summary Header with Live Color-Coded Counters -->
+                    <div class="px-5 py-4 border-b border-egx-border/80 bg-egx-card/60 flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-xs font-extrabold uppercase tracking-wider text-indigo-400">
+                                Passo 2: Tabela de Conferência Editável (Double-Check)
+                            </h3>
+                            <p class="text-[11px] text-slate-400 mt-0.5">
+                                Edite nomes (espaços são removidos na hora) ou ajuste os gêneros com feedback visual antes de exportar.
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span id="meta-count-total" class="px-3 py-1 rounded-xl text-xs font-bold bg-egx-bg text-slate-200 border border-egx-border">
+                                Total: 0
+                            </span>
+                            <span id="meta-count-masc" class="px-3 py-1 rounded-xl text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/50">
+                                Masculino: 0
+                            </span>
+                            <span id="meta-count-fem" class="px-3 py-1 rounded-xl text-xs font-bold bg-pink-500/20 text-pink-300 border border-pink-500/50">
+                                Feminino: 0
+                            </span>
+                            <span id="meta-count-ambos" class="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/50">
+                                Ambos: 0
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Table Toolbar -->
+                    <div class="px-5 py-3 border-b border-egx-border/80 bg-egx-bg/60 flex flex-wrap items-center gap-2">
+                        <input id="meta-filter" type="search" placeholder="🔍 Filtrar nomes..." class="fld w-44" aria-label="Filtrar nomes">
+                        <select id="meta-bulk-gender" class="fld col-gender" aria-label="Gênero para todos"><option>Ambos</option><option>Masculino</option><option>Feminino</option></select>
+                        <button id="meta-bulk-apply" type="button" class="btn-mini col-gender">Aplicar a todos</button>
+                        <button id="meta-sort" type="button" class="btn-mini">↕ Ordenar</button>
+                        <button id="meta-edit-texts" type="button" class="btn-mini egx-text-btn" disabled>✏️ Editar textos</button>
+                        <span class="egx-suffix-group">
+                            <input id="meta-suffix" type="text" class="fld" placeholder="Sufixo (ex.: _IMG)" aria-label="Sufixo para o nome dos anúncios">
+                            <button id="meta-suffix-apply" type="button" class="btn-mini" title="Adiciona o sufixo no fim do nome (selecionados ou, sem seleção, todos)">Aplicar sufixo</button>
+                            <button id="meta-suffix-remove" type="button" class="btn-mini" title="Tira esse sufixo do fim do nome">Remover</button>
+                        </span>
+                        <button id="meta-undo" type="button" class="btn-mini" disabled>↶ Desfazer</button>
+                        <span class="flex-1"></span>
+                        <button id="meta-backup" type="button" class="btn-mini">⬇ Backup JSON</button>
+                        <button id="meta-restore" type="button" class="btn-mini">⬆ Restaurar</button>
+                        <input id="meta-restore-file" type="file" accept="application/json,.json" class="hidden">
+                        <p id="meta-img-gender-note" class="hidden w-full text-[11px] text-amber-300">No Modo Imagem o gênero vem do conjunto (barra lateral); a coluna Gênero não é usada.</p>
+                    </div>
+
+                    <!-- Table Scroll Container -->
+                    <div class="overflow-x-auto overflow-y-auto flex-1 max-h-[52vh]">
+                        <table class="w-full text-left border-collapse min-w-[540px]" style="min-width:860px">
+                            <thead class="bg-egx-bg text-slate-400 text-[11px] uppercase tracking-wider sticky top-0 z-10 border-b border-egx-border">
+                                <tr>
+                                    <th class="egx-sel-cell"><input id="meta-select-all" type="checkbox" aria-label="Selecionar todos os anúncios visíveis"></th>
+                                    <th class="py-3.5 px-4 w-14 text-center font-bold">#</th>
+                                    <th class="py-3.5 px-4 font-bold">Nome do AD (Sem Espaços)</th>
+                                    <th class="col-gender py-3.5 px-4 w-52 font-bold">Gênero (Conferência)</th>
+                                    <th class="col-pset py-3.5 px-4 w-56 font-bold">Product Set ID</th>
+                                    <th class="py-3.5 px-4 font-bold">Textos do anúncio</th>
+                                    <th class="py-3.5 px-4 w-20 text-center font-bold">Remover</th>
+                                </tr>
+                            </thead>
+                            <tbody id="meta-table-body" class="divide-y divide-egx-border/50 text-sm">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pre-Export Confirmation Checklist Card -->
+                    <div id="meta-export-checklist" class="px-5 py-3.5 border-t border-egx-border/80 bg-black/55 flex flex-col gap-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                <span>📋 Checklist de Confirmação Antes de Baixar</span>
+                            </span>
+                            <span id="chk-status-pill" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                ✅ Pronto para exportar
+                            </span>
+                        </div>
+                        <div id="chk-summary-text" class="text-xs text-slate-200 leading-relaxed font-medium"></div>
+                    </div>
+
+                    <!-- Bottom Action Bar -->
+                    <div class="p-4 border-t border-egx-border/80 bg-egx-bg/85 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <button id="meta-btn-back" type="button"
+                                    class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-egx-card hover:bg-slate-700 text-slate-200 border border-egx-border transition-colors">
+                                ← Voltar / Editar Lista Bruta
+                            </button>
+                            <button id="meta-btn-add-row" type="button"
+                                    class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition-colors">
+                                + Adicionar Anúncio
+                            </button>
+                        </div>
+
+                        <button id="meta-btn-export" type="button"
+                                class="px-6 py-3 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white shadow-lg shadow-emerald-600/25 transition-all flex items-center justify-center gap-2">
+                            <span>📥 Exportar Planilha Meta Ads (.xlsx)</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- =====================================================================
+         MODULE: 📝 TAREFAS DO DIA
+         ===================================================================== -->
+    <div id="module-tasks" role="tabpanel" class="hidden flex-1 max-w-[1600px] w-full mx-auto p-5 sm:p-6 lg:p-8 flex-col gap-5 animate-fade-in">
+        <div class="egx-td-head">
+            <div>
+                <h2>📝 Tarefas do dia</h2>
+                <p>O que fazer, o que já foi feito e o rendimento de cada dia. <span id="td-scope" class="text-purple-300"></span></p>
+            </div>
+            <div class="egx-td-datenav">
+                <button type="button" id="td-prev" class="egx-td-btn" aria-label="Dia anterior">‹</button>
+                <div id="td-date" class="egx-td-date" aria-live="polite"></div>
+                <button type="button" id="td-next" class="egx-td-btn" aria-label="Próximo dia">›</button>
+                <button type="button" id="td-today" class="egx-td-btn">Hoje</button>
+            </div>
+        </div>
+        <section class="egx-td-card">
+            <div class="egx-td-add">
+                <input id="td-text" type="text" class="fld" placeholder="Nova tarefa (ex.: Subir campanha LFRAD836 no Meta)" aria-label="Nova tarefa">
+                <select id="td-cat" class="fld" aria-label="Categoria"><option>Campanha</option><option>Criativos</option><option>Planilha</option><option>Outro</option></select>
+                <label class="egx-td-urg"><input type="checkbox" id="td-urg"> Urgente</label>
+                <button type="button" id="td-add" class="egx-td-primary">+ Adicionar</button>
+            </div>
+            <div id="td-legacy" class="egx-td-carry hidden"></div>
+            <div id="td-carry" class="egx-td-carry hidden"></div>
+            <div class="egx-td-progress"><div class="egx-td-bar"><i id="td-bar"></i></div><span id="td-pct"></span></div>
+        </section>
+        <div class="egx-td-grid">
+            <section class="egx-td-card"><h3>A fazer <span id="td-n-todo" class="egx-td-count"></span></h3><div id="td-todo" class="egx-td-list"></div></section>
+            <section class="egx-td-card"><h3>Feito <span id="td-n-done" class="egx-td-count"></span></h3><div id="td-done" class="egx-td-list"></div></section>
+        </div>
+        <section class="egx-td-card">
+            <div class="egx-td-weekhead"><h3>Últimos 7 dias</h3><button type="button" id="td-roll" class="egx-td-btn">Levar pendentes para o próximo dia →</button></div>
+            <div id="td-week" class="egx-td-week"></div>
+        </section>
+    </div>
+
+    <!-- =====================================================================
+         MODULE 2: 🧹 EXTRATOR E ORGANIZADOR DE NOMES
+         ===================================================================== -->
+    <div id="module-extractor" role="tabpanel" class="hidden flex-1 max-w-[1600px] w-full mx-auto p-5 sm:p-6 lg:p-8 flex-col gap-5 animate-fade-in">
+
+        <!-- Module Header Banner -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                    <span>🧹 Organizar criativos</span>
+                </h2>
+                <p class="text-xs text-slate-400 mt-1">
+                    Extrai exclusivamente o código do AD e suas versões (ex: <code class="text-cyan-300">LFRAD744-V1</code>), ignorando gêneros, categorias, emojis e anotações extras.
+                </p>
+            </div>
+        </div>
+
+        <!-- Dynamic naming configuration -->
+        <section class="bg-egx-panel/75 border border-cyan-500/20 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col gap-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div><h3 class="text-sm font-bold text-cyan-200">Identificação dos criativos</h3><p class="text-xs text-slate-400 mt-1">Configure prefixos por projeto ou detecte automaticamente na entrada.</p></div>
+                <span id="ext-project-label" class="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">Sem projeto ativo</span>
+            </div>
+            <div class="flex flex-wrap gap-2"><input id="ext-prefix-input" class="flex-1 min-w-[180px] bg-slate-950/70 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono text-white" placeholder="Prefixos (ex.: LFRAD, MSPBRAD) separados por vírgula"><button id="ext-prefix-apply" type="button" class="px-3 py-2 rounded-lg text-xs font-semibold border border-cyan-500/30 bg-cyan-950/40 text-cyan-200 hover:bg-cyan-900/50">Aplicar prefixos</button><button id="ext-prefix-detect" type="button" class="px-3 py-2 rounded-lg text-xs font-semibold border border-purple-500/30 bg-purple-950/40 text-purple-200 hover:bg-purple-900/50">✨ Detectar na lista</button></div>
+            <div class="flex flex-wrap items-center gap-1.5"><span class="text-[11px] text-slate-400">Ativos:</span><span id="ext-prefix-chips" class="flex flex-wrap gap-1.5"></span><span id="ext-prefix-empty" class="text-[11px] text-slate-500">Nenhum prefixo: detecta automaticamente códigos encontrados.</span></div>
+            <div id="ext-prefix-feedback" class="hidden text-xs rounded-lg px-3 py-2 bg-slate-900/60 border border-slate-700 text-slate-300"></div>
+        </section>
+
+        <!-- Two-Column Side-by-Side Workspace -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
+
+            <!-- Left Column: Entrada Bagunçada -->
+            <div class="bg-egx-panel/75 backdrop-blur-md border border-purple-500/25 rounded-2xl shadow-xl flex flex-col overflow-hidden focus-within:border-cyan-500/70 transition-colors">
+                <div class="px-5 py-3.5 border-b border-egx-border/80 bg-egx-card/60 flex items-center justify-between">
+                    <h3 class="text-xs font-extrabold uppercase tracking-wider text-cyan-400">
+                        Entrada Bagunçada
+                    </h3>
+                    <span class="text-[11px] text-slate-400">Cole textos, tabelas ou blocos</span>
+                </div>
+
+                <textarea id="ext-raw-input"
+                          class="w-full flex-1 min-h-[260px] lg:min-h-[340px] bg-transparent p-5 text-sm text-slate-100 font-mono leading-relaxed placeholder-slate-600 focus:outline-none resize-y"
+                          placeholder="Cole aqui qualquer lista bagunçada...&#10;&#10;Exemplo:&#10;LFRAD750 - V2 - FEMININO - Emagrecimento 🔥&#10;LFRAD744 - V1 - MASCULINO - Traição&#10;LFRAD744 - V2 - MASC&#10;LFRAD745 - V1 - AMBOS&#10;LFRAD744 - V1 (duplicado)"></textarea>
+
+                <!-- Options & Action Buttons -->
+                <div class="p-4 border-t border-egx-border/80 bg-egx-bg/80 flex flex-col gap-4">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-300">
+                            <input type="checkbox" id="ext-opt-sort" checked
+                                   class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0 cursor-pointer">
+                            <span>Ordenar em ordem numérica crescente</span>
+                        </label>
+
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-300">
+                            <input type="checkbox" id="ext-opt-dedup" checked
+                                   class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0 cursor-pointer">
+                            <span>Remover duplicados</span>
+                        </label>
+
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-300">
+                            <input type="checkbox" id="ext-opt-upper" checked
+                                   class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0 cursor-pointer">
+                            <span>Padronizar em MAIÚSCULAS</span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <button id="ext-btn-run" type="button"
+                                class="flex-1 bg-cyan-600 hover:bg-cyan-500 active:scale-[0.99] text-white font-bold text-xs sm:text-sm py-3 px-5 rounded-xl shadow-lg shadow-cyan-600/20 transition-all flex items-center justify-center gap-2">
+                            <span>✨ Extrair e Ordenar</span>
+                        </button>
+                        <button id="ext-btn-clear" type="button"
+                                class="px-4 py-3 rounded-xl text-xs sm:text-sm font-semibold bg-egx-card hover:bg-slate-700 text-slate-300 border border-egx-border transition-colors">
+                            Limpar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Lista Limpa e Ordenada -->
+            <div class="bg-egx-panel/75 backdrop-blur-md border border-purple-500/25 rounded-2xl shadow-xl flex flex-col overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-egx-border/80 bg-egx-card/60 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                        <h3 class="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
+                            Lista Limpa e Ordenada
+                        </h3>
+                        <span id="ext-count-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                            0 anúncios extraídos
+                        </span>
+                    </div>
+
+                    <button id="ext-btn-to-creator" type="button" title="Envia a lista limpa para o Criador de campanhas e processa"
+                            class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md transition-all flex items-center gap-1.5">
+                        <span>📊 Enviar para o Criador</span>
+                    </button>
+                    <button id="ext-btn-copy" type="button"
+                            class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all flex items-center gap-1.5">
+                        <span>📋 Copiar Lista</span>
+                    </button>
+                </div>
+
+                <textarea id="ext-clean-output" readonly
+                          class="w-full flex-1 min-h-[260px] lg:min-h-[340px] bg-egx-bg/40 p-5 text-sm text-emerald-300 font-mono leading-relaxed placeholder-slate-600 focus:outline-none resize-y"
+                          placeholder="Os códigos limpos (AD + Versão) aparecerão aqui, um por linha..."></textarea>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         MODULE 3: 📝 EDITOR EM LOTE DE PLANILHAS (.XLSX)
+         ===================================================================== -->
+    <div id="module-bulk-editor" role="tabpanel" class="hidden flex-1 flex-col lg:flex-row max-w-[1600px] w-full mx-auto animate-fade-in">
+
+        <!-- Compact, collapsible batch editor controls -->
+        <aside class="w-full">
+          <details id="be-edit-details">
+            <summary>
+              <div class="flex flex-col gap-1 text-left">
+                <strong class="text-sm text-white">⚙️ Ajustes e ações em lote</strong>
+                <span class="text-xs text-slate-400">Abra somente quando precisar alterar campos nos anúncios selecionados.</span>
+              </div>
+            </summary>
+            <div class="be-edit-content">
+
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-extrabold uppercase tracking-wider text-slate-300">Configure as alterações desejadas</h2>
+                <span class="mbadge on-purple">Revisor .XLSX</span>
+            </div>
+
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+                Marque apenas os campos que deseja alterar em massa. Todas as demais colunas técnicas permanecem preservadas.
+            </p>
+
+            <div class="be-edit-grid">
+                <!-- Limpeza de IDs e Datas (Correção do erro Campaign Start Time / IDs antigos) -->
+                <div class="rounded-xl border border-red-500/40 bg-red-950/20 p-3 space-y-1.5">
+                    <label class="inline-flex items-start gap-2 cursor-pointer text-xs font-bold text-red-300">
+                        <input id="be-chk-clear-ids" type="checkbox" class="mt-0.5 w-4 h-4 rounded border-slate-600 bg-slate-900 text-red-500">
+                        <span>Limpar IDs e Datas Antigas</span>
+                    </label>
+                    <p class="text-[10px] text-red-400/80 leading-tight ml-6">Remove Campaign Start Time, Ad Set Time Start, Ad Start Time e IDs antigos para evitar o erro "os dados não coincidem" ao subir em outra conta.</p>
+                </div>
+
+                <!-- Advanced: Find & Replace in Names -->
+                <details class="rounded-xl border border-slate-700 bg-black/20 p-2.5 space-y-2">
+                    <summary class="cursor-pointer text-[11px] font-semibold text-slate-400">＋ Ferramenta avançada: localizar e substituir nomes</summary>
+                <div class="rounded-xl border border-egx-border bg-black/35 p-3 space-y-2">
+                    <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-purple-300">
+                        <input id="be-chk-replace" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-purple-500">
+                        <span>Localizar e Substituir nos Nomes</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input id="be-find" type="text" placeholder="Ex: CBO#1 ou BM51" class="fld w-full text-xs">
+                        <input id="be-replace" type="text" placeholder="Ex: CBO#2 ou BM52" class="fld w-full text-xs">
+                    </div>
+                    <div class="flex flex-wrap gap-3 text-[11px] text-slate-400">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer"><input id="be-rep-camp" type="checkbox" checked class="rounded"> Campanha</label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer"><input id="be-rep-adset" type="checkbox" checked class="rounded"> Conjunto</label>
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer"><input id="be-rep-ad" type="checkbox" checked class="rounded"> Anúncio</label>
+                    </div>
+                </div>
+                </details>
+
+                <!-- Link -->
+                <div class="rounded-xl border border-egx-border bg-black/35 p-3 space-y-2">
+                    <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-200">
+                        <input id="be-chk-link" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500">
+                        <span>Alterar Link de Destino (Link)</span>
+                    </label>
+                    <input id="be-link" type="url" placeholder="https://..." class="fld w-full text-xs font-mono">
+                </div>
+
+                <!-- URL Tags -->
+                <div class="rounded-xl border border-egx-border bg-black/35 p-3 space-y-2">
+                    <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-200">
+                        <input id="be-chk-utm" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500">
+                        <span>Alterar Parâmetros UTM (URL Tags)</span>
+                    </label>
+                    <textarea id="be-utm" rows="2" placeholder="sub1={{ad.id}}&utm_source=facebook..." class="fld w-full text-[11px] font-mono resize-y"></textarea>
+                </div>
+
+                <!-- Budget & Bid -->
+                <div class="rounded-xl border border-egx-border bg-black/35 p-3 space-y-2.5">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-200 mb-1">
+                                <input id="be-chk-budget" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500">
+                                <span>Orçamento</span>
+                            </label>
+                            <input id="be-budget" type="number" value="50" min="1" step="0.01" class="fld w-full text-xs">
+                        </div>
+                        <div>
+                            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-amber-300 mb-1">
+                                <input id="be-chk-bid" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-amber-500">
+                                <span>Bid Cap</span>
+                            </label>
+                            <input id="be-bid" type="number" value="25" min="0.01" step="0.01" class="fld w-full text-xs">
+                        </div>
+                    </div>
+                    <select id="be-budget-target" class="fld w-full text-xs">
+                        <option value="AUTO">Aplicar orçamento onde já existir (Campanha ou Conjunto)</option>
+                        <option value="CAMPAIGN">Forçar no Orçamento da Campanha (CBO/BID)</option>
+                        <option value="ADSET">Forçar no Orçamento do Conjunto (ABO)</option>
+                    </select>
+                </div>
+
+                <!-- Status & Gender -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="rounded-xl border border-egx-border bg-black/35 p-3 space-y-1.5">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-200">
+                            <input id="be-chk-status" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500">
+                            <span>Status</span>
+                        </label>
+                        <select id="be-status" class="fld w-full text-xs">
+                            <option value="ACTIVE">ACTIVE</option>
+                            <option value="PAUSED">PAUSED</option>
+                        </select>
+                    </div>
+
+                    <div class="rounded-xl border border-egx-border bg-black/35 p-3 space-y-1.5">
+                        <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-200">
+                            <input id="be-chk-gender" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500">
+                            <span>Gênero</span>
+                        </label>
+                        <select id="be-gender" class="fld w-full text-xs">
+                            <option value="">Aberto (Todos)</option>
+                            <option value="Men">Masculino (Men)</option>
+                            <option value="Women">Feminino (Women)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Age Min / Max -->
+                <div class="rounded-xl border border-egx-border bg-black/35 p-3 space-y-2">
+                    <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-200">
+                        <input id="be-chk-age" type="checkbox" class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-indigo-500">
+                        <span>Alterar Faixa Etária (Age Min / Max)</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input id="be-age-min" type="number" value="18" min="18" max="65" class="fld w-full text-xs" aria-label="Idade mínima lote">
+                        <input id="be-age-max" type="number" value="65" min="18" max="65" class="fld w-full text-xs" aria-label="Idade máxima lote">
+                    </div>
+                </div>
+
+                <button id="be-btn-apply" type="button"
+                        class="w-full bg-purple-600 hover:bg-purple-500 active:scale-[0.99] text-white font-bold text-xs sm:text-sm py-3.5 px-4 rounded-xl shadow-lg shadow-purple-600/25 transition-all flex items-center justify-center gap-2">
+                    <span>⚡ Aplicar Alterações na Planilha</span>
+                </button>
+            </div>
+            </div>
+          </details>
+        </aside>
+
+        <!-- Main Right Workspace of Tab 3 -->
+        <main class="flex-1 p-5 sm:p-6 lg:p-8 flex flex-col gap-5 min-w-0">
+
+            <!-- Upload / Dropzone Card -->
+            <div id="be-dropzone"
+                 class="bg-egx-panel/75 backdrop-blur-md border-2 border-dashed border-purple-500/40 hover:border-purple-400 rounded-2xl p-6 text-center transition-all cursor-pointer shadow-xl">
+                <input id="be-file-input" type="file" accept=".xlsx,.xls,.csv" class="hidden">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4 text-left">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-2xl shrink-0">
+                            📂
+                        </div>
+                        <div>
+                            <h3 class="text-sm sm:text-base font-extrabold text-white">
+                                Importar anúncios do Meta Ads (.XLSX / .CSV)
+                            </h3>
+                            <p id="be-file-info" class="text-xs text-slate-400 mt-0.5">
+                                Arraste sua exportação aqui ou selecione um arquivo para começar.
+                            </p>
+                        </div>
+                    </div>
+                    <button id="be-btn-pick" type="button"
+                            class="px-4 py-2.5 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md shrink-0 transition-colors">
+                        Selecionar Arquivo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Import Preview / Worksheet Selection -->
+            <section id="be-import-preview" class="hidden bg-egx-panel/75 border border-purple-500/30 rounded-2xl p-4 sm:p-5 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-bold text-purple-300">Prévia da importação</h3>
+                        <p id="be-import-summary" class="text-xs text-slate-400">Confira a aba e a linha dos cabeçalhos antes de carregar.</p>
+                    </div>
+                    <button id="be-preview-toggle" type="button" class="btn-mini" aria-expanded="true" aria-controls="be-preview-content">▾ Ocultar prévia</button>
+                </div>
+                <div id="be-preview-content" class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label for="be-sheet-select" class="block text-xs text-slate-400 mb-1">Aba do arquivo</label>
+                        <select id="be-sheet-select" class="fld w-full text-xs"></select>
+                    </div>
+                    <div>
+                        <label for="be-header-row" class="block text-xs text-slate-400 mb-1">Linha dos cabeçalhos</label>
+                        <select id="be-header-row" class="fld w-full text-xs"></select>
+                    </div>
+                </div>
+                <div class="overflow-auto rounded-xl border border-egx-border max-h-44">
+                    <table class="min-w-full text-[11px] text-left"><tbody id="be-preview-tbody"></tbody></table>
+                </div>
+                <div class="flex flex-wrap gap-2 justify-end">
+                    <button id="be-btn-preview-refresh" type="button" class="btn-mini">Atualizar prévia</button>
+                    <button id="be-btn-load-sheet" type="button" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold">Carregar esta aba</button>
+                </div>
+                </div>
+            </section>
+
+            <!-- Loaded Spreadsheet Preview & Export Card -->
+            <div id="be-workspace" class="hidden flex-1 flex-col bg-egx-panel/75 backdrop-blur-md border border-purple-500/25 rounded-2xl shadow-xl overflow-hidden animate-slide-up">
+                <nav id="be-level-tabs" role="tablist" aria-label="Níveis de edição da planilha">
+                    <button class="be-level-tab" type="button" role="tab" data-level="campaign" aria-selected="true">Campanhas <span class="level-count" id="be-campaign-count">0</span></button>
+                    <button class="be-level-tab" type="button" role="tab" data-level="adset" aria-selected="false">Conjuntos de anúncios <span class="level-count" id="be-adset-count">0</span></button>
+                    <button class="be-level-tab" type="button" role="tab" data-level="ad" aria-selected="false">Anúncios <span class="level-count" id="be-ad-count">0</span></button>
+                </nav>
+                <div class="px-5 py-3.5 border-b border-egx-border/80 bg-egx-card/60 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5 flex-wrap">
+                        <span id="be-row-count" class="px-3 py-1 rounded-xl text-xs font-bold bg-egx-bg text-slate-200 border border-egx-border">0 linhas</span>
+                        <span id="be-col-count" class="px-3 py-1 rounded-xl text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40">0 colunas preservadas</span>
+                        <button id="be-btn-reimport" type="button" title="Selecionar outro arquivo">↻ Trocar arquivo</button>
+                        <button id="be-workspace-tools-toggle" type="button">⚙ Edição em lote</button>
+                    </div>
+
+                    <div class="be-primary-tools">
+                        <input id="be-search" type="search" placeholder="🔍 Buscar campanha, conjunto ou anúncio..." class="fld w-48 text-xs" aria-label="Filtrar linhas planilha">
+                        <select id="be-filter-status" class="fld w-32 text-xs" aria-label="Filtrar status"><option value="">Todos os status</option><option value="ACTIVE">ACTIVE</option><option value="PAUSED">PAUSED</option><option value="INACTIVE">INACTIVE</option></select>
+                        <div class="be-selection-tools">
+                            <button id="be-btn-select-visible" type="button" class="btn-mini">☑ Selecionar visíveis</button><button id="be-btn-edit-selected" type="button" class="btn-mini" hidden>✎ Editar selecionados</button>
+                            <button id="be-btn-duplicate" type="button" class="btn-mini">⧉ Duplicar</button>
+                            <button id="be-btn-delete-selected" type="button" class="btn-mini text-red-300">🗑 Excluir</button>
+                        </div>
+                        <div class="be-utility-tools">
+                            <button id="be-btn-undo" type="button" class="btn-mini" title="Desfazer última alteração">↩ Desfazer</button>
+                            <button id="be-btn-redo" type="button" class="btn-mini" title="Refazer alteração">↪ Refazer</button>
+                            <button id="be-btn-compare" type="button" class="btn-mini">🔎 Comparar original</button>
+                            <button id="be-btn-backup" type="button" class="btn-mini">💾 Backup JSON</button>
+                            <button id="be-btn-restore" type="button" class="btn-mini">⟲ Restaurar original</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="be-split-workarea">
+                  <div id="be-list-pane" class="overflow-x-auto overflow-y-auto flex-1 max-h-[55vh]">
+                    <table class="w-full text-left border-collapse min-w-[620px] text-xs">
+                        <thead class="bg-egx-bg text-slate-400 text-[11px] uppercase tracking-wider sticky top-0 z-10 border-b border-egx-border">
+                            <tr>
+                                <th class="py-2 px-3 w-10 text-center"><input id="be-select-all" type="checkbox" aria-label="Selecionar todos os itens visíveis"></th>
+                                <th class="py-2 px-3">Anúncio</th>
+                                <th class="py-2 px-3 w-24">Status</th>
+                                <th class="py-2 px-3">Destino</th>
+                                <th class="py-2 px-28 text-center">Ações</th>
+                                <th class="py-2 px-3 w-14 text-center">Excluir</th>
+                            </tr>
+                        </thead>
+                        <tbody id="be-tbody" class="divide-y divide-egx-border/50 text-slate-200"></tbody>
+                    </table>
+                  </div>
+                  <aside id="be-inspector-pane">
+                    <div id="be-inspector-empty">
+                      <div class="be-inspector-icon">✎</div>
+                      <h3>Editor de propriedades</h3>
+                      <p>Selecione <strong>Editar</strong> em uma campanha, conjunto ou anúncio para abrir suas configurações aqui, sem perder a lista.</p>
+                    </div>
+                    <div id="be-inspector-content"></div>
+                  </aside>
+                </div>
+
+                <section id="be-validation" class="mx-3 mb-3 rounded-xl border border-slate-700 bg-slate-950/60 p-3" aria-live="polite">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-white">🛡️ Revisão e validação da planilha</h3>
+                            <p class="text-[11px] text-slate-400 mt-1">Verifica nomes e inconsistências gerais; opcionalmente compara configurações com um modelo de campanha real.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <label for="be-validation-model" class="text-[11px] text-slate-400">Modelo de referência:</label>
+                            <select id="be-validation-model" class="fld text-xs px-2 py-1.5 rounded-lg bg-slate-900 border border-slate-700">
+                                <option value="general">Validação geral</option>
+                                <option value="esc-bid">ESC BID</option>
+                                <option value="esc-cbo">ESC CBO</option>
+                                <option value="tads-abo">TADS ABO</option>
+                            </select>
+                            <button id="be-btn-validate" type="button" class="btn-mini border border-purple-500/40 text-purple-200">Executar validação</button>
+                        </div>
+                    </div>
+                    <div id="be-validation-summary" class="mt-3 flex flex-wrap gap-2 text-xs">
+                        <span class="rounded-lg bg-slate-800 px-2.5 py-1 text-slate-300">Ainda não validado</span>
+                    </div>
+                    <div id="be-validation-results" class="hidden mt-3 space-y-1.5 max-h-52 overflow-auto"></div>
+                </section>
+
+                <div class="p-4 border-t border-egx-border/80 bg-egx-bg/85 flex flex-wrap items-center justify-between gap-3">
+                    <span class="text-xs text-slate-400">
+                        Colunas de data/hora e IDs antigos são removidos automaticamente quando a limpeza está marcada.
+                    </span>
+                    <button id="be-btn-export" type="button"
+                            class="px-6 py-3 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white shadow-lg shadow-emerald-600/25 transition-all flex items-center gap-2">
+                        <span>📥 Exportar Planilha Editada (.xlsx)</span>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+
+    <!-- Configuração (constantes do Meta Ads e modelos de validação) -->
+    <script src="js/config/validation-models.js"></script>
+    <!-- Núcleo: utilidades, armazenamento, diálogos, validação e navegação -->
+    <script src="js/core/helpers.js"></script>
+    <script src="js/core/storage.js"></script>
+    <script src="js/core/dialog.js"></script>
+    <script src="js/core/validation.js"></script>
+    <script src="js/core/shell.js"></script>
+    <!-- Módulos (cada um se registra em EGXModules) -->
+    <script src="js/modules/creator.js"></script>
+    <script src="js/modules/extractor.js"></script>
+    <script src="js/modules/bulk-editor.js"></script>
+    <script src="js/modules/tasks.js"></script>
+    <!-- Workspace: projetos, painel, salvamento, backups e exportações -->
+    <script src="js/core/workspace.js"></script>
+    <!-- Interface -->
+    <script src="js/ui/cascade.js"></script>
+    <script src="js/ui/appearance.js"></script>
+    <script src="js/ui/shortcuts.js"></script>
+</body>
+</html>

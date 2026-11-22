@@ -1,0 +1,16 @@
+.egx-suffix-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-left: 8px;
+    margin-left: 2px;
+    border-left: 1px solid rgba(148, 163, 184, 0.2);
+}
+#meta-suffix {
+    width: 120px;
+    font-family: ui-monospace, monospace;
+}
+#meta-undo:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
