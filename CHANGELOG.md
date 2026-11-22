@@ -7,7 +7,7 @@
 - Camada única de armazenamento (`js/core/storage.js`): grava na pasta do Workspace ou, sem pasta, no IndexedDB do navegador. Os módulos se registram em `EGXModules` e são salvos automaticamente.
 - Validação extraída para `js/core/validation.js`; os modelos (ESC BID, ESC CBO, TADS ABO) ficam em `js/config/validation-models.js`.
 - Modo offline real: SheetJS, Tailwind compilado e a fonte Inter em `app/vendor/`.
-- V13.10 preservada na tag `v13.10` e em `releases/v13.10/`.
+- V13.10 preservada na tag `v13.10-stable` e em `releases/v13.10/`.
 
 **Dados**
 - Editor em lote salvo no projeto (`bulkEditor.json`, com o arquivo original para manter as outras abas).

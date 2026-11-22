@@ -7,7 +7,7 @@ Ferramenta local para criação, organização, validação e edição em massa 
 - **Versão:** V14
 - **Tipo:** aplicação web local (HTML + CSS + JS, sem servidor e sem build)
 - **Página principal:** `app/index.html`
-- **Versão estável anterior:** V13.10 — tag `v13.10` e arquivo em `releases/v13.10/`
+- **Versão estável anterior:** V13.10 — tag `v13.10-stable` e arquivo em `releases/v13.10/`
 
 ## Como executar
 
