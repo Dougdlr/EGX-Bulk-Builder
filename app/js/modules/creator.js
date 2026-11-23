@@ -166,11 +166,22 @@
         const rx = codeRegex(prefixes);
         if (!rx) return [];
         const matches = [...text.matchAll(new RegExp(rx.source, rx.flags))];
-        return matches.map((m, i) => ({
-            code: m[0],
-            block: text.slice(m.index, matches[i + 1]?.index ?? text.length).trim(),
-            index: m.index,
-        }));
+        // Linhas que começam com QUALQUER código (até de prefixo ignorado) encerram o bloco anterior.
+        // Assim "MSPBRAD14 - FEMININO" não mistura o gênero no LFRAD744 da linha de cima.
+        // Linhas de continuação (ex.: "FEMININO", "p:1234…") continuam no bloco.
+        const lineStarts = [];
+        const anyCodeLine = /^[ \t]*[A-Z][A-Z0-9_-]*?[ \t]*\d{1,9}(?!\d)/i;
+        let pos = 0;
+        text.split('\n').forEach(line => {
+            if (anyCodeLine.test(line)) lineStarts.push(pos);
+            pos += line.length + 1;
+        });
+        return matches.map((m, i) => {
+            const lineEnd = text.indexOf('\n', m.index);
+            const nextLine = lineStarts.find(s => s > m.index && (lineEnd < 0 || s > lineEnd));
+            const end = Math.min(matches[i + 1]?.index ?? text.length, nextLine ?? text.length);
+            return { code: m[0], block: text.slice(m.index, end).trim(), index: m.index };
+        });
     }
     function refreshFilterPreview() {
         const raw = el.raw.value;
@@ -253,28 +264,45 @@
         const ageMin = F['age-min'].value,
             ageMax = F['age-max'].value === '65' ? '65+' : F['age-max'].value;
 
+        // Cada pendência sabe para onde levar o usuário (campo da barra lateral ou linha da tabela)
         const issues = [];
-        if (!camp) issues.push('falta Nome da Campanha');
-        if (isNaN(bud) || bud <= 0) issues.push('orçamento inválido');
-        if (strat === 'BID' && (isNaN(bid) || bid <= 0)) issues.push('bid inválido');
-        if (!link) issues.push('falta Link de destino');
-        if (dupCount > 0) issues.push(`${dupCount} duplicado(s)`);
-        if (c.t === 0) issues.push('nenhum anúncio');
-        if (!digitsOnly(F['page-id'].value)) issues.push('falta ID da Página');
-        if (!digitsOnly(F['pixel-id'].value)) issues.push('falta ID do Pixel');
-        if (!digitsOnly(F['ig-id'].value)) issues.push('falta ID do Instagram');
-        if (!digitsOnly(F.beneficiary.value)) issues.push('falta beneficiário/pagador');
-        const noPset = img ? 0 : state.ads.filter(a => a.name && !a.productSet).length;
-        if (noPset) issues.push(`${noPset} sem Product Set ID`);
+        const need = (text, go) => issues.push({ text, go });
+        if (!camp) need('Nome da campanha', 'meta-camp-name');
+        if (isNaN(bud) || bud <= 0) need('Orçamento', 'meta-budget');
+        if (strat === 'BID' && (isNaN(bid) || bid <= 0)) need('Limite de lance (Bid)', 'meta-bid-amount');
+        if (!link) need('Link de destino', 'meta-link');
+        if (dupCount > 0) {
+            need(`${dupCount} duplicado(s)`, 'row:dup');
+            need('🧹 Remover repetidos', 'fix:dedup');
+        }
+        if (c.t === 0) need('Nenhum anúncio', 'meta-btn-add-row');
+        if (!digitsOnly(F['page-id'].value)) need('ID da Página', 'meta-page-id');
+        if (!digitsOnly(F['pixel-id'].value)) need('ID do Pixel', 'meta-pixel-id');
+        if (!digitsOnly(F['ig-id'].value)) need('ID do Instagram', 'meta-ig-id');
+        if (!digitsOnly(F.beneficiary.value)) need('Beneficiário/pagador', 'meta-beneficiary');
+        // Catálogo e Product Set ID não vão na planilha: são escolhidos no editor da Meta.
 
         if (issues.length) {
-            el.chkPill.className =
-                'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40';
-            el.chkPill.textContent = `⚠️ Atenção: ${issues.join(' • ')}`;
+            el.chkPill.className = 'mc-chk-pill is-pending';
+            el.chkPill.textContent = `⚠️ ${issues.length} pendência${issues.length > 1 ? 's' : ''} — clique para resolver`;
         } else {
-            el.chkPill.className =
-                'text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+            el.chkPill.className = 'mc-chk-pill is-ready';
             el.chkPill.textContent = '✅ Pronto para exportar';
+        }
+        renderTree(camp, strat, bud, img);
+        const box = $('meta-chk-issues');
+        if (box) {
+            box.replaceChildren(
+                ...issues.map(i => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'mc-issue';
+                    b.dataset.go = i.go;
+                    b.textContent = i.text;
+                    return b;
+                }),
+            );
+            box.hidden = !issues.length;
         }
 
         const budTxt = !isNaN(bud) && bud > 0 ? `R$ ${bud.toFixed(2).replace('.', ',')}/dia` : 'Orçamento pendente';
@@ -285,6 +313,46 @@
             : `${c.t} Conjunto(s) individuais (${c.m} Masc, ${c.f} Fem, ${c.a} Ambos) • Manual Feed/Story/Reels`;
         const withTxt = state.ads.filter(a => a.name && (a.body || a.title || a.cta)).length;
         el.chkText.textContent = `1 Campanha ${strat} [${budTxt}${bidTxt}] • ${structTxt} • Idade ${ageMin}–${ageMax}${withTxt ? ` • ${withTxt} com textos personalizados` : ''}`;
+    }
+
+    // Prévia de como a campanha vai ficar no Meta: campanha → conjuntos → anúncios
+    function renderTree(camp, strat, bud, img) {
+        const box = $('meta-tree-body');
+        if (!box) return;
+        const ads = state.ads.filter(a => a.name);
+        const G = { Masculino: '♂', Feminino: '♀', Ambos: '⚥' };
+        const node = (cls, text, meta) => {
+            const d = document.createElement('div');
+            d.className = 'mt-node ' + cls;
+            const t = document.createElement('span');
+            t.className = 'mt-name';
+            t.textContent = text;
+            d.appendChild(t);
+            if (meta) {
+                const m = document.createElement('small');
+                m.textContent = meta;
+                d.appendChild(m);
+            }
+            return d;
+        };
+        const budTxt = bud > 0 ? `R$ ${bud.toFixed(2).replace('.', ',')}/dia` : 'sem orçamento';
+        const where = strat === 'ABO' ? `${budTxt} em cada conjunto` : `${budTxt} na campanha${strat === 'BID' ? ' · limite de lance' : ''}`;
+        const parts = [node('mt-camp', camp || '(campanha sem nome)', `${strat} · ${where}`)];
+        const MAX = 12;
+        if (img) {
+            const adsetName = F['img-adset-name'].value.trim() || 'IMGs';
+            parts.push(node('mt-set', adsetName, `${G[F['img-adset-gender'].value] || ''} ${F['img-adset-gender'].value} · ${ads.length} anúncio(s) · Advantage+`));
+            ads.slice(0, MAX).forEach(a => parts.push(node('mt-ad', a.name)));
+        } else {
+            ads.slice(0, MAX).forEach(a => {
+                parts.push(node('mt-set', a.name, `${G[a.gender] || ''} ${a.gender} · 1 anúncio`));
+                parts.push(node('mt-ad', a.name));
+            });
+        }
+        if (ads.length > MAX) parts.push(node('mt-more', `+ ${ads.length - MAX} ${img ? 'anúncio(s)' : 'conjunto(s)'}…`));
+        box.replaceChildren(...parts);
+        const sum = $('meta-tree-sum');
+        if (sum) sum.textContent = img ? `1 campanha · 1 conjunto · ${ads.length} anúncio(s)` : `1 campanha · ${ads.length} conjunto(s) · ${ads.length} anúncio(s)`;
     }
 
     function syncUI() {
@@ -400,7 +468,6 @@
                 <button type="button" class="cp text-slate-400 hover:text-indigo-300 px-2 py-1.5 rounded-lg hover:bg-slate-800/80 transition-colors text-xs" title="Copiar nome" aria-label="Copiar nome">📋</button>
                 <span class="flag text-sm cursor-help" aria-hidden="true"></span><span class="used"></span></div></td>
             <td class="col-gender py-3 px-4"><select class="gd w-full border rounded-xl text-xs sm:text-sm px-3 py-2 font-semibold outline-none cursor-pointer transition-colors" aria-label="Gênero">${GEN.map(g => `<option class="bg-slate-900 text-white" value="${g}">${g}</option>`).join('')}</select></td>
-            <td class="col-pset py-3 px-4"><input type="text" inputmode="numeric" class="ps w-full bg-egx-bg border border-egx-border rounded-xl text-xs px-3 py-2 text-slate-200 font-mono outline-none focus:border-indigo-500" placeholder="p:ID do conjunto" aria-label="Product Set ID"></td>
             <td class="py-3 px-4"><button type="button" class="txt egx-txt-cell" title="Editar textos deste anúncio"></button></td>
             <td class="py-3 px-4 text-center"><button type="button" class="del text-slate-400 hover:text-red-400 px-2.5 py-1.5 rounded-xl hover:bg-red-500/10 transition-colors" title="Remover anúncio" aria-label="Remover anúncio">✕</button></td>`;
         const nm = tr.querySelector('.nm'),
@@ -410,16 +477,6 @@
         nm.addEventListener('change', () => paintUsed(tr.querySelector('.used'), a.name));
         gd.value = a.gender;
         paintGender(gd, a.gender);
-        const ps = tr.querySelector('.ps');
-        ps.value = a.productSet ? 'p:' + a.productSet : '';
-        ps.addEventListener('input', () => {
-            a.productSet = digitsOnly(ps.value);
-            refresh();
-            save();
-        });
-        ps.addEventListener('blur', () => {
-            ps.value = a.productSet ? 'p:' + a.productSet : '';
-        });
         const sel = tr.querySelector('.sel');
         sel.checked = state.selected.has(a.id);
         tr.classList.toggle('egx-row-sel', sel.checked);
@@ -840,18 +897,17 @@
     /* ----- Eventos da barra lateral, construtor de nome e modo ----- */
     el.btnCat.addEventListener('click', () => setMode('catalog'));
     el.btnImg.addEventListener('click', () => setMode('image'));
-    $('meta-camp-name')
-        .closest('aside')
-        .addEventListener('input', () => {
-            syncUI();
-            save();
-        });
-    $('meta-camp-name')
-        .closest('aside')
-        .addEventListener('change', () => {
-            syncUI();
-            save();
-        });
+    // Configurações ficam na barra da campanha (topo) e na coluna Oferta (direita)
+    [document.querySelector('#module-meta-ads .mc-hero'), $('meta-sidebar')]
+        .filter(Boolean)
+        .forEach(box =>
+            ['input', 'change'].forEach(ev =>
+                box.addEventListener(ev, () => {
+                    syncUI();
+                    save();
+                }),
+            ),
+        );
     document
         .querySelectorAll('#meta-camp-name,#meta-budget,#meta-link,#meta-age-min,#meta-bid-amount')
         .forEach(e => e.addEventListener('input', () => e.classList.remove('bad')));
@@ -928,6 +984,7 @@
         if (!n) return showAppToast('Dê um nome ao preset.', 'error');
         const s = getSettings();
         delete s['camp-name'];
+        s.prefixes = [...state.creatorPrefixes]; // preset por oferta: prefixos dos anúncios junto
         if (projectPresetsActive) {
             projectPresets[n] = s;
             window.EGXModules?.changed('campaignCreator');
@@ -940,13 +997,56 @@
         presetName.value = '';
         showAppToast(`Preset "${n}" salvo ${projectPresetsActive ? 'neste projeto' : 'nos presets gerais'}.`, 'success');
     });
-    presetSel.addEventListener('change', () => {
-        const s = getPresets()[presetSel.value];
+    function applyPreset(n) {
+        const s = getPresets()[n];
         if (!s) return;
+        const keepName = F['camp-name'].value;
         applySettings(s);
+        if (keepName) F['camp-name'].value = keepName; // o preset nunca apaga o nome digitado
+        if (Array.isArray(s.prefixes) && s.prefixes.length) {
+            state.creatorPrefixes = normalizePrefixes(s.prefixes);
+            renderPrefixChips();
+            refreshFilterPreview();
+        }
+        presetSel.value = n;
         save();
-        showAppToast(`Preset "${presetSel.value}" aplicado.`, 'success');
-    });
+        suggestPreset();
+        showAppToast(`Preset "${n}" aplicado${s.prefixes?.length ? ` (prefixos: ${s.prefixes.join(', ')})` : ''}.`, 'success');
+    }
+    presetSel.addEventListener('change', () => applyPreset(presetSel.value));
+
+    // Sugere o preset cujo nome (ou produto salvo nele) aparece no nome da campanha / produto
+    const presetHint = $('mc-preset-hint');
+    function suggestPreset() {
+        if (!presetHint) return;
+        const norm = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+        const tokens = new Set([...norm(F['camp-name'].value).split(' '), ...norm(NB.prod?.value).split(' ')].filter(t => t.length >= 3));
+        const all = getPresets();
+        const hit = Object.keys(all).find(n => {
+            if (n === presetSel.value) return false;
+            const prod = norm(all[n]?.nb?.prod);
+            return norm(n).split(' ').some(t => t.length >= 3 && tokens.has(t)) || (prod && tokens.has(prod));
+        });
+        presetHint.hidden = !hit;
+        if (!hit) return;
+        presetHint.replaceChildren();
+        const t = document.createElement('span');
+        t.textContent = `💡 O preset “${hit}” combina com esta campanha.`;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = 'Aplicar';
+        b.addEventListener('click', () => applyPreset(hit));
+        presetHint.append(t, b);
+    }
+    let hintTimer = 0;
+    [F['camp-name'], NB.prod].forEach(inp =>
+        inp?.addEventListener('input', () => {
+            clearTimeout(hintTimer);
+            hintTimer = setTimeout(suggestPreset, 250);
+        }),
+    );
+    setTimeout(suggestPreset, 400);
+    $('nb-apply')?.addEventListener('click', () => setTimeout(suggestPreset, 50));
     $('meta-preset-del').addEventListener('click', () => {
         const n = presetSel.value;
         if (!n) return showAppToast('Selecione um preset para excluir.', 'error');
@@ -977,18 +1077,10 @@
     });
     $('meta-btn-back').addEventListener('click', () => showStep(1));
 
-    $('meta-btn-process').addEventListener('click', () => {
-        if (!el.raw.value.trim()) return showAppToast('Cole sua lista de anúncios antes de processar.', 'error');
-        if (filterEls.input.value.trim()) filterEls.add.click();
-        if (!state.creatorPrefixes.length) {
-            refreshFilterPreview();
-            filterEls.input.focus();
-            return showAppToast('Adicione o prefixo dos anúncios antes de processar (ex.: MSPBRAD).', 'error');
-        }
+    // Lê a lista colada → anúncios (mesma regra usada no resumo ao vivo e no Processar)
+    function parseRaw(raw, prefixes) {
         const parsed = [];
-        const prefixesToUse = state.creatorPrefixes;
-        const blocks = splitRawByDetectedCodes(el.raw.value, prefixesToUse);
-        blocks.forEach(({ code, block }) => {
+        splitRawByDetectedCodes(raw, prefixes).forEach(({ code, block }) => {
             if (!/^[A-Z][A-Z0-9_-]*?\s*\d/i.test(code)) return;
             const name = codeFromMatch(code);
             const fem = /\bfeminino\b|\bfem\b/i.test(block),
@@ -999,6 +1091,136 @@
                 makeAd(name, fem && !masc ? 'Feminino' : masc && !fem ? 'Masculino' : 'Ambos', fem && masc, ps),
             );
         });
+        return parsed;
+    }
+
+    /* ----- Resumo ao vivo da lista colada (Passo 1) ----- */
+    const live = $('meta-live');
+    const processLabel = $('meta-btn-process')?.querySelector('span');
+    let liveTimer = 0;
+    function renderLive() {
+        if (!live) return;
+        const raw = el.raw.value;
+        const lines = raw.split(/\r?\n/).filter(l => l.trim());
+        if (!lines.length) {
+            live.hidden = true;
+            if (processLabel) processLabel.textContent = '⚡ Processar lista';
+            return;
+        }
+        live.hidden = false;
+        const pre = state.creatorPrefixes;
+        if (!pre.length) {
+            // Sem prefixo: sugere os encontrados na lista, com 1 clique
+            const found = detectPrefixes(raw).slice(0, 4);
+            live.innerHTML = `<span class="ml-ico">🏷️</span><span class="ml-text">${
+                found.length ? 'Prefixos encontrados na lista:' : 'Nenhum código reconhecido ainda.'
+            }</span>${found.map(p => `<button type="button" class="ml-chip ml-use" data-prefix="${p}">Usar ${p}</button>`).join('')}${
+                found.length > 1 ? `<button type="button" class="ml-chip ml-use" data-prefix="${found.join(',')}">Usar todos</button>` : ''
+            }`;
+            if (processLabel) processLabel.textContent = '⚡ Processar lista';
+            return;
+        }
+        const ads = parseRaw(raw, pre);
+        const g = { Masculino: 0, Feminino: 0, Ambos: 0 };
+        ads.forEach(a => (g[a.gender] = (g[a.gender] || 0) + 1));
+        const names = ads.map(a => a.name);
+        const dups = names.length - new Set(names).size;
+        const conflict = ads.filter(a => a.conflict).length;
+        const used = window.EGXWorkspace?.creativeUsage?.();
+        const usedN = used ? ads.filter(a => used.get(codeOf(a.name))?.length).length : 0;
+        const others = detectPrefixes(raw).filter(p => !pre.includes(p));
+        const img = state.mode === 'image';
+        live.innerHTML = `<span class="ml-count"><b>${ads.length}</b> anúncio${ads.length === 1 ? '' : 's'}</span>${
+            img
+                ? ''
+                : `<span class="ml-chip g-m">♂ ${g.Masculino}</span><span class="ml-chip g-f">♀ ${g.Feminino}</span><span class="ml-chip g-a">⚥ ${g.Ambos}</span>`
+        }${dups ? `<span class="ml-chip ml-warn" title="O mesmo código aparece mais de uma vez">⚠ ${dups} repetido${dups > 1 ? 's' : ''}</span>` : ''}${
+            conflict ? `<span class="ml-chip ml-warn" title="Linha com masculino e feminino ao mesmo tempo — vira Ambos">⚠ ${conflict} gênero duplo</span>` : ''
+        }${usedN ? `<span class="ml-chip ml-info" title="Criativos que já saíram em exportações deste projeto">↺ ${usedN} já usado${usedN > 1 ? 's' : ''}</span>` : ''}${
+            others.length
+                ? `<span class="ml-chip ml-muted" title="Códigos com outro prefixo foram ignorados">ignorados: ${others.slice(0, 3).join(', ')}</span><button type="button" class="ml-chip ml-use" data-prefix="${[...pre, ...others].join(',')}">+ incluir</button>`
+                : ''
+        }`;
+        if (processLabel)
+            processLabel.textContent = ads.length ? `⚡ Processar ${ads.length} anúncio${ads.length === 1 ? '' : 's'}` : '⚡ Processar lista';
+    }
+    const scheduleLive = () => {
+        clearTimeout(liveTimer);
+        liveTimer = setTimeout(renderLive, 120);
+    };
+    el.raw.addEventListener('input', scheduleLive);
+    live?.addEventListener('click', e => {
+        const b = e.target.closest('[data-prefix]');
+        if (!b) return;
+        filterEls.input.value = b.dataset.prefix;
+        filterEls.add.click();
+        scheduleLive();
+    });
+    // Prefixos mudam por chips/botões: atualiza o resumo
+    new MutationObserver(scheduleLive).observe(filterEls.chips, { childList: true });
+    new MutationObserver(scheduleLive).observe(el.badge, { attributes: true, attributeFilter: ['class'] });
+    setTimeout(renderLive, 300);
+
+    // Pendências clicáveis: levam ao campo (abre a seção da barra lateral) ou à primeira linha com problema
+    $('meta-chk-issues')?.addEventListener('click', e => {
+        const go = e.target.closest('[data-go]')?.dataset.go;
+        if (!go) return;
+        if (go === 'fix:dedup') return removeDuplicates();
+        if (go === 'row:pset' || go === 'row:dup') {
+            const rows = [...(el.tbody?.querySelectorAll('tr[data-id]') || [])];
+            const names = state.ads.map(a => a.name);
+            const tr = rows.find(r => {
+                const ad = state.ads.find(a => String(a.id) === r.dataset.id);
+                if (!ad) return false;
+                return go === 'row:pset' ? ad.name && !ad.productSet : names.filter(n => n === ad.name).length > 1;
+            });
+            if (!tr) return;
+            tr.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            const inp = tr.querySelector(go === 'row:pset' ? 'input.ps' : 'input.nm');
+            inp?.focus();
+            window.EGXFlash?.(tr);
+            return;
+        }
+        const target = $(go);
+        if (!target) return;
+        const sec = target.closest('details.mc-sec');
+        if (sec) sec.open = true;
+        target.closest('details:not(.mc-sec)')?.setAttribute('open', '');
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        target.focus({ preventScroll: true });
+        window.EGXFlash?.(target);
+    });
+    // Mantém a primeira ocorrência de cada nome (os textos personalizados da primeira ficam)
+    function removeDuplicates() {
+        const seen = new Set();
+        const keep = state.ads.filter(a => {
+            if (!a.name) return true;
+            const k = a.name.trim().toUpperCase();
+            if (seen.has(k)) return false;
+            seen.add(k);
+            return true;
+        });
+        const removed = state.ads.length - keep.length;
+        if (!removed) return showAppToast('Não há anúncios repetidos.', 'info');
+        remember();
+        state.ads = keep;
+        state.selected.clear();
+        render();
+        save();
+        showAppToast(`${removed} anúncio(s) repetido(s) removido(s).`, 'success', { label: 'Desfazer', fn: undo });
+    }
+    $('chk-status-pill')?.addEventListener('click', () => $('meta-chk-issues')?.querySelector('[data-go]')?.click());
+
+    $('meta-btn-process').addEventListener('click', () => {
+        if (!el.raw.value.trim()) return showAppToast('Cole sua lista de anúncios antes de processar.', 'error');
+        if (filterEls.input.value.trim()) filterEls.add.click();
+        if (!state.creatorPrefixes.length) {
+            refreshFilterPreview();
+            filterEls.input.focus();
+            return showAppToast('Adicione o prefixo dos anúncios antes de processar (ex.: MSPBRAD).', 'error');
+        }
+        const prefixesToUse = state.creatorPrefixes;
+        const parsed = parseRaw(el.raw.value, prefixesToUse);
         if (!parsed.length) {
             refreshFilterPreview();
             return showAppToast(
@@ -1121,6 +1343,8 @@
         const igId = metaId('x:', F['ig-id'].value);
         const pixelId = metaId('tp:', F['pixel-id'].value);
         const beneficiary = digitsOnly(F.beneficiary.value);
+        // Catálogo e Product Set ID ficam de fora: preenchidos, a Meta trava a "Fonte dos anúncios"
+        // (mídia do catálogo) no anúncio. Sem eles, você escolhe catálogo e conjunto de produtos no editor da Meta.
         const attribution = META.attribution[F.attribution.value] || META.attribution.click7_view1;
         const bidLabel = isBID ? META.bidLabel.cap : META.bidLabel.volume;
 
@@ -1149,7 +1373,6 @@
             'Optimized Conversion Tracking Pixels': pixelId,
             'Optimized Event': META.event,
             Link: linkUrl,
-            'Product Set ID': productSet ? 'p:' + productSet : '',
             Countries: META.country,
             'Location Types': META.locationTypes,
             Gender: toMeta(gender),
@@ -1258,12 +1481,11 @@
         if (!(await confirmValidation(rows))) return;
 
         try {
-            const ws = XLSX.utils.json_to_sheet(rows, { header: HEADERS });
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Meta Ads Bulk Import');
+            const wb = makeWorkbook(rows);
             const campName = F['camp-name'].value.trim();
             const fileName = `${campName}_bulk.xlsx`;
             XLSX.writeFile(wb, fileName);
+            $('meta-step-pill-3')?.classList.add('done');
             const data = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
             window.EGXWorkspace?.recordExport({
                 fileName,
@@ -1283,15 +1505,138 @@
         }
     });
 
+    function makeWorkbook(rows) {
+        const ws = XLSX.utils.json_to_sheet(rows, { header: HEADERS });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Meta Ads Bulk Import');
+        return wb;
+    }
+
+    // Revisar no Editor antes de baixar: monta a mesma planilha da exportação e abre no Editor.
+    // Campos em branco não bloqueiam (dá para completar no Editor); só avisa o que falta.
+    $('meta-btn-to-editor')?.addEventListener('click', async () => {
+        const validAds = state.ads.filter(a => a.name.trim());
+        if (!validAds.length) return showAppToast('Adicione ao menos um anúncio com nome válido.', 'error');
+        let rows;
+        try {
+            rows = buildRows(validAds);
+        } catch (e) {
+            return showAppToast('Erro ao montar a planilha. Verifique os dados.', 'error');
+        }
+        const campName = F['camp-name'].value.trim() || 'CAMPANHA_EGX';
+        const fileName = `${campName}_bulk.xlsx`;
+        const ok = await openInEditor(fileName, rows, makeWorkbook(rows));
+        if (ok === false) return;
+        $('meta-step-pill-3')?.classList.add('done');
+        window.EGXWorkspace?.log?.('Planilha enviada ao Editor', `${campName} · ${rows.length} linha(s)`);
+        const missing = [
+            !F['camp-name'].value.trim() && 'nome da campanha',
+            !F.link.value.trim() && 'link de destino',
+            !digitsOnly(F['page-id'].value) && 'ID da Página',
+            !digitsOnly(F['pixel-id'].value) && 'ID do Pixel',
+        ].filter(Boolean);
+        showAppToast(
+            missing.length
+                ? `Planilha aberta no Editor. Ainda falta: ${missing.join(', ')} — dá para completar lá antes de exportar.`
+                : `Planilha aberta no Editor (${rows.length} linha(s)). Revise e exporte por lá quando estiver pronta.`,
+            missing.length ? 'info' : 'success',
+        );
+    });
+
+    /* ----- Variações: a mesma lista em várias campanhas (CBO / ABO / BID) numa planilha só ----- */
+    // Troca o tipo no nome mantendo o número: ..._CBO#1_... → ..._ABO#1_...
+    function nameForType(name, type) {
+        const rx = /(^|_)(CBO|ABO|BID)(?=#|_|$)/i;
+        return rx.test(name) ? name.replace(rx, `$1${type}`) : `${name}_${type}`;
+    }
+    $('meta-btn-variants')?.addEventListener('click', async () => {
+        const validAds = state.ads.filter(a => a.name.trim());
+        if (!validAds.length) return showAppToast('Adicione ao menos um anúncio com nome válido.', 'error');
+        const cur = F.strategy.value;
+        const base = F['camp-name'].value.trim() || 'CAMPANHA_EGX';
+        const others = ['CBO', 'ABO', 'BID'].filter(t => t !== cur);
+        const v = await EGXDialog.form({
+            title: 'Gerar variações da campanha',
+            okLabel: 'Gerar',
+            wide: true,
+            message: `Mesmos ${validAds.length} anúncios e configurações, em outras estruturas. Atual: ${cur} — ${base}`,
+            fields: [
+                { id: 'types', type: 'checks', label: 'Gerar também como', value: others.slice(0, 1), options: others.map(t => ({ value: t, label: `${t} → ${nameForType(base, t)}` })) },
+                { id: 'include', type: 'checkbox', label: `Incluir a campanha atual (${cur}) na mesma planilha`, value: true },
+                { id: 'budget', type: 'number', step: 'any', label: 'Orçamento diário das variações (CBO/BID: da campanha · ABO: de cada conjunto)', value: F.budget.value },
+                { id: 'bid', type: 'number', step: 'any', label: 'Limite de lance (Bid Amount) da variação BID', value: F['bid-amount'].value, show: x => (x.types || []).includes('BID') },
+                {
+                    id: 'dest',
+                    type: 'radio',
+                    label: 'Depois',
+                    value: 'editor',
+                    options: [
+                        { value: 'editor', label: 'Abrir no Editor para revisar (recomendado)' },
+                        { value: 'download', label: 'Baixar a planilha .xlsx' },
+                    ],
+                },
+            ],
+            validate: x =>
+                !(x.types || []).length
+                    ? 'Escolha pelo menos uma estrutura.'
+                    : !(Number(x.budget) > 0)
+                      ? 'Informe o orçamento.'
+                      : (x.types || []).includes('BID') && !(Number(x.bid) > 0)
+                        ? 'Informe o limite de lance da variação BID.'
+                        : '',
+        });
+        if (!v) return;
+        // Gera cada variação trocando temporariamente os campos da barra lateral
+        const saved = { strategy: F.strategy.value, budget: F.budget.value, bid: F['bid-amount'].value, name: F['camp-name'].value };
+        let rows = [];
+        try {
+            if (v.include) rows = rows.concat(buildRows(validAds));
+            v.types.forEach(t => {
+                F.strategy.value = t;
+                F.budget.value = v.budget;
+                F['bid-amount'].value = t === 'BID' ? v.bid : saved.bid;
+                F['camp-name'].value = nameForType(base, t);
+                rows = rows.concat(buildRows(validAds));
+            });
+        } catch (e) {
+            showAppToast('Erro ao montar as variações.', 'error');
+            return;
+        } finally {
+            F.strategy.value = saved.strategy;
+            F.budget.value = saved.budget;
+            F['bid-amount'].value = saved.bid;
+            F['camp-name'].value = saved.name;
+        }
+        const n = (v.include ? 1 : 0) + v.types.length;
+        const fileName = `${base}_variacoes.xlsx`;
+        const wb = makeWorkbook(rows);
+        if (v.dest === 'editor') {
+            if ((await openInEditor(fileName, rows, wb)) === false) return;
+            showAppToast(`${n} campanha(s) abertas no Editor (${rows.length} linhas).`, 'success');
+        } else {
+            XLSX.writeFile(wb, fileName);
+            window.EGXWorkspace?.recordExport({
+                fileName,
+                data: XLSX.write(wb, { type: 'array', bookType: 'xlsx' }),
+                module: 'Criador de campanhas',
+                campaigns: [...new Set(rows.map(r => r['Campaign Name']))],
+                ads: validAds.map(a => a.name),
+                rows: rows.length,
+            });
+            showAppToast(`Planilha ${fileName} com ${n} campanha(s) exportada.`, 'success');
+        }
+        $('meta-step-pill-3')?.classList.add('done');
+    });
+
     async function openInEditor(fileName, rows, wb) {
         const be = window.EGXBulkEditorBridge;
-        if (!be) return;
+        if (!be) return false;
         if (be.summary().rows) {
             const ok = await EGXDialog.confirm(
                 `O Editor em lote já tem uma planilha aberta (${be.summary().fileName || 'sem nome'}). Substituir pela planilha gerada?`,
                 { okLabel: 'Substituir' },
             );
-            if (!ok) return;
+            if (!ok) return false;
         }
         be.openGenerated({
             fileName,

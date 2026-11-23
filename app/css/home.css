@@ -1,0 +1,517 @@
+/* ===================================================================
+   Página inicial (Central de projetos) — V15
+   Fundo: imagem padrão (assets/home-wallpaper.jpg), imagem do usuário
+   ou só o gradiente EGX. Escolha em Temas → "Página inicial".
+   =================================================================== */
+
+:root {
+    --egx-home-dim: 0.3;
+    --egx-home-custom: none;
+    --egx-home-default: url('../assets/home-wallpaper.jpg');
+}
+
+/* Painel de Aparência agora fica no <body> e abre perto de quem chamou */
+#egx-appearance-panel {
+    position: fixed !important;
+    z-index: 85 !important;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+}
+.egx-ap-seg {
+    display: flex;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 10px;
+    background: rgba(4, 8, 18, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+}
+.egx-ap-seg button {
+    flex: 1;
+    padding: 6px 4px;
+    font-size: 11px;
+    color: #94a3b8;
+    border-radius: 7px !important;
+}
+.egx-ap-seg button:hover {
+    color: #fff;
+}
+.egx-ap-seg button[aria-pressed='true'] {
+    color: #fff;
+    background: color-mix(in srgb, var(--egx-tint, #8b5cf6) 30%, #172338);
+    box-shadow: inset 0 0 0 1px var(--egx-accent-line);
+}
+
+/* ---------- Estrutura ---------- */
+body #egx-launcher {
+    position: relative;
+    isolation: isolate;
+    min-height: calc(100vh - var(--egx-keybar-h, 0px));
+    padding: clamp(16px, 3vw, 40px) clamp(16px, 4vw, 56px);
+    background: #04060c !important;
+    overflow: hidden;
+}
+body.egx-launcher-active #egx-launcher {
+    display: block;
+}
+.egx-home-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* Base com a identidade EGX: feixe roxo diagonal (aparece sempre, e sozinho em "Sem imagem") */
+    background:
+        radial-gradient(60% 70% at 92% 105%, rgba(168, 85, 247, 0.55), transparent 60%),
+        linear-gradient(152deg, transparent 52%, rgba(126, 34, 206, 0.28) 70%, rgba(192, 132, 252, 0.5) 86%, transparent 88%),
+        radial-gradient(45% 50% at 8% 0%, color-mix(in srgb, var(--egx-tint, #8b5cf6) 22%, transparent), transparent 70%),
+        #04060c;
+}
+.egx-home-img {
+    position: absolute;
+    inset: -2%;
+    background-size: cover;
+    background-position: center;
+    background-image: none;
+    opacity: 0;
+    transform: scale(1.04);
+    transition:
+        opacity 0.8s ease,
+        transform 1.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+html[data-egx-home='default'] .egx-home-img {
+    background-image: var(--egx-home-default);
+    /* a imagem padrão já traz o logo no canto superior direito: ancora por lá */
+    background-position: right top;
+    transform-origin: right top;
+}
+/* Sem logo duplicado quando a imagem padrão (que já tem o logo) está ativa */
+html[data-egx-home='default'] .egx-home-brand svg,
+html[data-egx-home='default'] .egx-home-sep {
+    display: none;
+}
+html[data-egx-home='custom'] .egx-home-img {
+    background-image: var(--egx-home-custom);
+}
+body.egx-launcher-active .egx-home-img {
+    opacity: 1;
+    transform: scale(1);
+    animation: egxHomeDrift 40s ease-in-out infinite alternate;
+}
+html[data-egx-home='none'] .egx-home-img {
+    display: none;
+}
+@keyframes egxHomeDrift {
+    to {
+        transform: scale(1.05) translate3d(-1%, -1%, 0);
+    }
+}
+.egx-home-shade {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(3, 5, 11, calc(var(--egx-home-dim) + 0.4)) 0%, rgba(3, 5, 11, var(--egx-home-dim)) 55%, rgba(3, 5, 11, calc(var(--egx-home-dim) * 0.5)) 100%),
+        linear-gradient(0deg, rgba(3, 5, 11, 0.85), transparent 45%);
+}
+html[data-egx-home='none'] .egx-home-shade {
+    display: none;
+}
+
+.egx-home {
+    position: relative;
+    max-width: 1240px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(22px, 3.2vw, 40px);
+}
+html.egx-intro #egx-launcher > .egx-home {
+    opacity: 0;
+}
+
+/* Barra superior */
+.egx-home-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.egx-home-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.egx-home-brand svg {
+    width: 112px;
+    height: auto;
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.5));
+}
+.egx-home-sep {
+    width: 1px;
+    height: 26px;
+    background: rgba(255, 255, 255, 0.2);
+}
+.egx-home-app {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ddd6fe;
+}
+.egx-home-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.egx-home-clock {
+    font-size: 12px;
+    color: #a9b6c8;
+    margin-right: 6px;
+    font-variant-numeric: tabular-nums;
+}
+.egx-home-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 34px;
+    padding: 0 13px;
+    font-size: 12.5px;
+    color: #e2e8f0;
+    background: rgba(8, 12, 22, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px !important;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+.egx-home-chip:hover,
+.egx-home-chip[aria-expanded='true'] {
+    border-color: var(--egx-accent-line);
+    background: rgba(15, 23, 42, 0.8);
+}
+
+/* Destaque */
+.egx-home-hero {
+    max-width: 720px;
+    padding-top: clamp(8px, 4vh, 48px);
+}
+.egx-home-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: #d8b4fe;
+}
+.egx-home-kicker span {
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--egx-tint, #8b5cf6);
+    box-shadow: 0 0 10px var(--egx-tint, #8b5cf6);
+}
+.egx-home-title {
+    margin-top: 12px;
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    color: #fff;
+    text-shadow: 0 6px 30px rgba(0, 0, 0, 0.45);
+}
+#egx-home-name {
+    background: linear-gradient(100deg, #fff 10%, color-mix(in srgb, var(--egx-tint, #8b5cf6) 45%, #fff) 90%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.egx-home-sub {
+    margin-top: 12px;
+    font-size: 15px;
+    color: #b8c3d4;
+}
+.egx-home-create {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 6px 6px 16px;
+    border-radius: 16px;
+    background: rgba(8, 12, 22, 0.66);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+    transition:
+        border-color 0.25s,
+        box-shadow 0.25s;
+}
+.egx-home-create:focus-within {
+    border-color: var(--egx-tint, #8b5cf6);
+    box-shadow:
+        0 0 0 4px var(--egx-accent-soft),
+        0 20px 50px rgba(0, 0, 0, 0.35);
+}
+.egx-home-create-ico {
+    font-size: 18px;
+    color: #c4b5fd;
+}
+#egx-launcher .egx-home-create input#egx-project-name {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    font-size: 15px !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 6px !important;
+    color: #fff !important;
+}
+.egx-home-create:focus-within .egx-home-create-hint {
+    display: none;
+}
+.egx-home-create .egx-launcher-btn {
+    height: 44px;
+    padding: 0 20px;
+    border-radius: 12px !important;
+}
+.egx-home-links {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12.5px;
+}
+.egx-home-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #ddd6fe;
+    padding: 4px 0;
+}
+.egx-home-link:hover {
+    color: #fff;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.egx-home-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 9px;
+    background: #64748b;
+}
+.egx-home-note {
+    color: #8a98ad;
+}
+
+/* Grade */
+.egx-home-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 16px;
+    align-items: start;
+}
+#egx-launcher .egx-launcher-card {
+    background: rgba(9, 13, 24, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+}
+.egx-home-projects {
+    padding: 18px;
+}
+.egx-home-sec-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.egx-home-sec-head h2 {
+    font-size: 16px;
+    font-weight: 800;
+    color: #fff;
+}
+.egx-home-sec-head p {
+    margin-top: 3px;
+    font-size: 12px;
+    color: #8a98ad;
+}
+.egx-home-count {
+    font-size: 11.5px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: #e9d5ff;
+    background: color-mix(in srgb, var(--egx-tint, #8b5cf6) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--egx-tint, #8b5cf6) 35%, transparent);
+    white-space: nowrap;
+}
+.egx-home-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+}
+.egx-home-list .egx-project-card {
+    cursor: pointer;
+    padding: 14px !important;
+    background: rgba(15, 23, 42, 0.55) !important;
+    border-radius: 14px !important;
+}
+.egx-home-list .egx-project-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--egx-accent-line);
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.4);
+}
+.egx-home-list .egx-project-card h3 {
+    font-size: 15px;
+}
+.egx-home-list .egx-project-card [data-open] {
+    padding: 8px 12px;
+}
+.egx-home-list .egx-project-card [data-rename],
+.egx-home-list .egx-project-card [data-delete] {
+    padding: 8px 10px;
+    opacity: 0.55;
+}
+.egx-home-list .egx-project-card:hover [data-rename],
+.egx-home-list .egx-project-card:hover [data-delete] {
+    opacity: 1;
+}
+.egx-home-empty {
+    text-align: center;
+    padding: 28px 12px;
+    border: 1px dashed rgba(148, 163, 184, 0.3);
+    border-radius: 14px;
+}
+.egx-home-empty div {
+    font-size: 30px;
+}
+.egx-home-empty p {
+    margin-top: 6px;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+.egx-home-empty span {
+    font-size: 12.5px;
+    color: #8a98ad;
+}
+
+.egx-home-side {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.egx-home-mini {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+}
+.egx-home-storage {
+    flex-wrap: wrap;
+}
+.egx-home-storage-btns {
+    flex-basis: 100%;
+    display: flex;
+    gap: 6px;
+}
+.egx-home-storage-btns .egx-launcher-btn {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 12px;
+}
+.egx-home-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(140deg, color-mix(in srgb, var(--egx-tint, #8b5cf6) 70%, #1e1b4b), #1e1b4b);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.egx-home-label {
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #8a98ad;
+}
+.egx-home-mini h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 2px;
+}
+#egx-workspace-status {
+    font-size: 11.5px;
+    color: #8a98ad;
+    margin-top: 1px;
+}
+.egx-home-icon {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 9px !important;
+}
+.egx-home-icon:hover {
+    color: #fff;
+    border-color: var(--egx-accent-line);
+}
+.egx-home-tips {
+    padding: 14px;
+}
+.egx-home-tips ul {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-size: 12px;
+    color: #a9b6c8;
+}
+.egx-home-tips li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.egx-home-tips .egx-kbd {
+    min-width: 54px;
+}
+
+@media (max-width: 960px) {
+    .egx-home-grid {
+        grid-template-columns: 1fr;
+    }
+    .egx-home-clock {
+        display: none;
+    }
+}
+@media (max-width: 560px) {
+    .egx-home-brand svg {
+        width: 86px;
+    }
+    .egx-home-sep,
+    .egx-home-app,
+    .egx-home-create-hint,
+    .egx-home-tips {
+        display: none;
+    }
+    .egx-home-create {
+        flex-wrap: wrap;
+        padding: 8px;
+    }
+    .egx-home-create .egx-launcher-btn {
+        width: 100%;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .egx-home-img {
+        animation: none !important;
+        transition: none !important;
+    }
+}

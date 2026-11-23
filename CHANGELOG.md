@@ -1,5 +1,31 @@
 # Changelog
 
+## V16.5 — Nova interface, atalhos e Criador reformulado
+
+**Interface geral**
+- Barra superior compacta com indicador deslizante nas abas; transição direcional entre seções; brilho nos cartões; números do painel com contagem animada.
+- **Barra de atalhos no rodapé** que muda conforme a seção e a etapa (clicável), **paleta de comandos** (`Ctrl K`) e **folha de atalhos** (`?`). Seções com `Alt 1–5` no navegador e `Ctrl 1–5` no app instalado (também AltGr e "tocar Alt e depois o número").
+- **Página inicial** nova com saudação, imagem de fundo padrão (`app/assets/home-wallpaper.jpg`) e opção em Temas → "Página inicial" (imagem EGX, imagem própria ou nenhuma; escurecer).
+- Painel de Aparência/Temas abre também na página inicial.
+
+**Criador de campanhas**
+- Layout em três áreas: **barra da campanha** fixa (modo, nome com 📅 e montador, tipo **CBO / ABO / BID** em botões, orçamento e limite de lance, etapas; compacta ao rolar, sem deslocar o conteúdo), **criativos** no centro e coluna **Oferta** (preset, público, destino, conta Meta) com seções completas recolhidas.
+- Resumo ao vivo da lista colada, sugestão de prefixos com 1 clique, leitura linha a linha (sem misturar gênero de linhas vizinhas), pendências clicáveis, remover repetidos, prévia em árvore, presets por oferta (com prefixos e sugestão automática) e **Variações** CBO/ABO/BID numa planilha só.
+- **Revisar no Editor** antes de baixar (`Ctrl Shift E`).
+- Catálogo e Product Set ID **não** vão mais na planilha (na Meta eles travavam a "Fonte dos anúncios"); são escolhidos no editor da Meta. Página, Instagram, Pixel e beneficiário continuam.
+
+**Editor de planilhas**
+- Tipo de orçamento **CBO / ABO / BID** detectado e aplicado: orçamento e lance só no nível certo; BID marca "Bid cap" e permite limite de lance por conjunto ou em lote (🎯).
+- Detecção de **orçamento misto** e de diário + total juntos (erros que a Meta recusa), com botão **Corrigir**; aviso de orçamento diário muito alto.
+- Termos traduzidos no formato "Português (English)", ex.: *Limite de lance (Bid Amount)*.
+- Nome do arquivo exportado segue o nome atual da campanha (editável).
+- Modelos de referência (ESC BID, ESC CBO, TADS ABO) desativados: as regras de estrutura agora são gerais.
+
+**Técnico**
+- `serve.py` (servidor local com `Cache-Control: no-cache`) e `?v=` nos arquivos para evitar versão antiga em cache.
+- Service worker real (`sw.js`): rede primeiro, cópia para uso offline.
+- Editor em lote dividido em `js/modules/bulk-editor/model.js` e `ui.js` (sai `bulk-editor.js`).
+
 ## V14 — Reorganização e dados por projeto
 
 **Estrutura**

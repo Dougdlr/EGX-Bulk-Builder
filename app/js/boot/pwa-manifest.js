@@ -26,16 +26,8 @@
             'serviceWorker' in navigator &&
             (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
         ) {
-            const swCode = `
-                self.addEventListener('install', e => self.skipWaiting());
-                self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-                self.addEventListener('fetch', e => {
-                    if (e.request.method !== 'GET') return;
-                    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-                });
-            `;
-            const swBlob = new Blob([swCode], { type: 'application/javascript' });
-            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+            // Arquivo real (sw.js): o navegador não aceita service worker criado a partir de blob:
+            navigator.serviceWorker.register('sw.js').catch(e => console.warn('EGX: service worker não registrado', e));
         }
     } catch (e) {
         /* Fallback silencioso em ambientes restritos */

@@ -7,7 +7,9 @@
         panel = $id('egx-appearance-panel'),
         img = $id('egx-wallpaper-img');
     if (!btn || !panel) return;
-    let st = { mode: 'egx', tint: '#8b5cf6', wall: 60, blur: 22 };
+    // O painel fica no <body> para abrir tanto no app quanto na página inicial (onde o cabeçalho some)
+    document.body.appendChild(panel);
+    let st = { mode: 'egx', tint: '#8b5cf6', wall: 60, blur: 22, home: 'default', homeDim: 30 };
     try {
         st = Object.assign(st, JSON.parse(localStorage.getItem(KEY) || '{}'));
     } catch (e) {}
@@ -38,32 +40,100 @@
         $id('egx-wall-opacity').value = st.wall;
         $id('egx-glass-blur').value = st.blur;
         $id('egx-glass-blur-wrap').classList.toggle('hidden', st.mode === 'egx' || st.mode === 'solid');
+        root.dataset.egxHome = st.home;
+        root.style.setProperty('--egx-home-dim', st.homeDim / 100);
+        panel.querySelectorAll('[data-egx-home]').forEach(b => b.setAttribute('aria-pressed', b.dataset.egxHome === st.home));
+        $id('egx-home-dim').value = st.homeDim;
         syncWall();
     }
 
-    // Abrir / fechar
-    const open = () => {
+    // Abrir / fechar (botão do cabeçalho ou qualquer [data-egx-appearance-open])
+    const triggers = () => [btn, ...document.querySelectorAll('[data-egx-appearance-open]')];
+    let opener = btn;
+    const open = (from = btn) => {
+        opener = from && from.getClientRects().length ? from : btn;
+        const r = opener.getBoundingClientRect();
+        panel.style.top = Math.round(r.bottom + 10) + 'px';
+        panel.style.right = Math.max(12, Math.round(window.innerWidth - r.right)) + 'px';
         panel.classList.remove('hidden');
-        btn.setAttribute('aria-expanded', 'true');
+        triggers().forEach(t => t.setAttribute('aria-expanded', String(t === opener)));
         window.EGXCascade?.(panel.children);
     };
     const close = () => {
         panel.classList.add('hidden');
-        btn.setAttribute('aria-expanded', 'false');
+        triggers().forEach(t => t.setAttribute('aria-expanded', 'false'));
     };
-    btn.addEventListener('click', e => {
-        e.stopPropagation();
-        panel.classList.contains('hidden') ? open() : close();
-    });
+    const toggle = from => (panel.classList.contains('hidden') ? open(from) : close());
     document.addEventListener('click', e => {
-        if (!panel.classList.contains('hidden') && !e.target.closest('#egx-appearance')) close();
+        const t = e.target.closest('#egx-appearance-btn, [data-egx-appearance-open]');
+        if (t) {
+            e.stopPropagation();
+            return toggle(t);
+        }
+        if (!panel.classList.contains('hidden') && !e.target.closest('#egx-appearance-panel')) close();
     });
+    window.addEventListener('resize', () => !panel.classList.contains('hidden') && open(opener));
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && !panel.classList.contains('hidden')) {
             close();
-            btn.focus();
+            opener.focus();
         }
     });
+    window.EGXAppearance = { open, close, toggle };
+
+    // Fundo da página inicial: imagem padrão, imagem própria (IndexedDB) ou nenhuma
+    const kv = (mode, fn) =>
+        new Promise((ok, no) => {
+            const o = indexedDB.open('egx', 1);
+            o.onupgradeneeded = () => o.result.createObjectStore('kv');
+            o.onerror = () => no(o.error);
+            o.onsuccess = () => {
+                const r = fn(o.result.transaction('kv', mode).objectStore('kv'));
+                r.onsuccess = () => ok(r.result);
+                r.onerror = () => no(r.error);
+            };
+        });
+    let homeUrl = null;
+    const showHome = blob => {
+        if (homeUrl) URL.revokeObjectURL(homeUrl);
+        homeUrl = blob ? URL.createObjectURL(blob) : null;
+        root.style.setProperty('--egx-home-custom', homeUrl ? `url("${homeUrl}")` : 'none');
+    };
+    try {
+        kv('readonly', s => s.get('homeWallpaper'))
+            .then(b => b && showHome(b))
+            .catch(() => {});
+    } catch (e) {
+        /* sem IndexedDB */
+    }
+    panel.querySelectorAll('[data-egx-home]').forEach(b =>
+        b.addEventListener('click', () => {
+            if (b.dataset.egxHome === 'custom' && !homeUrl) return $id('egx-home-picker').click();
+            st.home = b.dataset.egxHome;
+            apply();
+            save();
+        }),
+    );
+    $id('egx-home-picker').addEventListener('change', e => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        showHome(f);
+        try {
+            kv('readwrite', s => s.put(f, 'homeWallpaper')).catch(() => {});
+        } catch (err) {
+            /* ignora */
+        }
+        st.home = 'custom';
+        apply();
+        save();
+        e.target.value = '';
+        showAppToast('Imagem da página inicial aplicada.', 'success');
+    });
+    $id('egx-home-dim').addEventListener('input', e => {
+        st.homeDim = +e.target.value;
+        root.style.setProperty('--egx-home-dim', st.homeDim / 100);
+    });
+    $id('egx-home-dim').addEventListener('change', save);
 
     // Escolhas
     panel.querySelectorAll('[data-egx-theme]').forEach(b =>

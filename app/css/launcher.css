@@ -3,7 +3,8 @@ body.egx-launcher-active > header,
 body.egx-launcher-active > #egx-project-dashboard,
 body.egx-launcher-active > #module-meta-ads,
 body.egx-launcher-active > #module-extractor,
-body.egx-launcher-active > #module-bulk-editor {
+body.egx-launcher-active > #module-bulk-editor,
+body.egx-launcher-active > #module-tasks {
     display: none !important;
 }
 #egx-launcher {

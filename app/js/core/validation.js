@@ -98,15 +98,49 @@ window.EGXValidation = (() => {
                         type: 'status',
                     });
             }
-            if (idxCampBudget >= 0 && idxAdsetBudget >= 0 && clean(row[idxCampBudget]) && clean(row[idxAdsetBudget]))
-                warnings.push({
-                    row: i + 1,
-                    level: 'Orçamento',
-                    message:
-                        'Orçamento preenchido na campanha e no conjunto. Confira se a estrutura CBO/ABO está intencional.',
-                    type: 'budget',
-                });
         });
+        // Estrutura de orçamento por campanha — a Meta recusa "tipos de orçamentos mistos".
+        // CBO/BID: orçamento e estratégia só na campanha. ABO: orçamento e estratégia só nos conjuntos.
+        {
+            const iCL = col('Campaign Lifetime Budget'),
+                iAL = col('Ad Set Lifetime Budget'),
+                iCB = col('Campaign Bid Strategy'),
+                iAB = col('Ad Set Bid Strategy'),
+                iBA = col('Bid Amount');
+            const num = v => Number(clean(v).replace(',', '.')) || 0;
+            const pos = v => num(v) > 0,
+                filled = v => clean(v) !== '';
+            const byCamp = new Map();
+            rows.forEach((row, i) => {
+                const c = idxCamp >= 0 ? clean(row[idxCamp]) : '';
+                if (!byCamp.has(c)) byCamp.set(c, []);
+                byCamp.get(c).push({ row, i });
+            });
+            byCamp.forEach((list, name) => {
+                const has = (ix, f) => ix >= 0 && list.some(x => f(x.row[ix]));
+                const campBudget = has(idxCampBudget, pos) || has(iCL, pos);
+                const adsetBudget = has(idxAdsetBudget, pos) || has(iAL, pos);
+                const push = msg =>
+                    errors.push({
+                        row: list[0].i + 1,
+                        level: 'Campanha',
+                        message: `${msg} — ${name || 'campanha sem nome'}`,
+                        type: 'budget-structure',
+                    });
+                if (has(idxCampBudget, pos) && has(iCL, pos))
+                    push('Só um tipo de orçamento por campanha: diário (Campaign Daily Budget) OU total (Campaign Lifetime Budget) — os dois estão preenchidos');
+                if (has(idxAdsetBudget, pos) && has(iAL, pos))
+                    push('Só um tipo de orçamento por conjunto: diário (Ad Set Daily Budget) OU total (Ad Set Lifetime Budget) — os dois estão preenchidos');
+                if (campBudget && adsetBudget)
+                    push('Orçamento misto: valor na campanha e nos conjuntos. Use um nível só (CBO/BID = campanha, ABO = conjuntos)');
+                if (!campBudget && has(iCB, filled))
+                    push('Orçamento misto: estratégia de lance na campanha (Campaign Bid Strategy) sem orçamento de campanha. Em ABO deixe esse campo vazio');
+                if (campBudget && has(iAB, filled))
+                    push('Orçamento na campanha, mas estratégia de lance do conjunto (Ad Set Bid Strategy) preenchida');
+                if (campBudget && has(iCB, v => /bid\s*cap/i.test(v)) && iBA >= 0 && list.some(x => !pos(x.row[iBA])))
+                    push('Limite de lance (Bid cap) sem valor de limite de lance (Bid Amount) em algum conjunto');
+            });
+        }
         adNameGroups.forEach((rows, k) => {
             if (rows.length > 1)
                 errors.push({
@@ -116,149 +150,8 @@ window.EGXValidation = (() => {
                     type: 'duplicate',
                 });
         });
-        // Modelo de referência: valida somente configurações, nunca nomes ou valores de orçamento específicos.
-        modelKey = modelKey || 'general';
-        const rule = (window.EGX_VALIDATION_MODELS || {})[modelKey];
-        // Campanha de imagem gerada pelo Criador: sem plataformas/formato definidos (posicionamento automático).
-        const fmtIx = col('Format Option'),
-            platIx = col('Publisher Platforms');
-        const isImage =
-            fmtIx >= 0 &&
-            rows.every(r => ['', 'single_image'].includes(clean(r[fmtIx]))) &&
-            (platIx < 0 || rows.every(r => !clean(r[platIx])));
-        if (rule) {
-            const modelCols = {
-                objective: 'Campaign Objective',
-                buying: 'Buying Type',
-                campaignBudget: 'Campaign Daily Budget',
-                campaignLifetime: 'Campaign Lifetime Budget',
-                campaignStrategy: 'Campaign Bid Strategy',
-                adsetBudget: 'Ad Set Daily Budget',
-                adsetLifetime: 'Ad Set Lifetime Budget',
-                event: 'Optimized Event',
-                optimization: 'Optimization Goal',
-                billing: 'Billing Event',
-                bidAmount: 'Bid Amount',
-                adsetStrategy: 'Ad Set Bid Strategy',
-                gender: 'Gender',
-                countries: 'Countries',
-                placements: 'Publisher Platforms',
-                cta: 'Call to Action',
-                creative: 'Creative Type',
-                format: 'Format Option',
-                advantage: 'Advantage Audience',
-            };
-            const columnValues = key => {
-                const ix = col(modelCols[key]);
-                return ix < 0 ? [] : [...new Set(rows.map(r => clean(r[ix])).filter(Boolean))];
-            };
-            const checkValue = (key, expected, level, desc) => {
-                const vals = columnValues(key);
-                if (!vals.length) {
-                    warnings.push({
-                        row: 1,
-                        level: desc,
-                        message: `Campo “${modelCols[key]}” não encontrado ou vazio; não foi possível validar.`,
-                        type: 'model-missing-column',
-                    });
-                    return;
-                }
-                const wrong = vals.filter(v => !expected.includes(v));
-                if (wrong.length)
-                    warnings.push({
-                        row: 1,
-                        level: desc,
-                        message: `Valor fora do modelo ${rule.label}: ${wrong.join(', ')}. Esperado: ${expected.join(' / ')}.`,
-                        type: 'model-mismatch',
-                    });
-            };
-            const checkBudget = (key, mode, desc) => {
-                const ix = col(modelCols[key]);
-                if (ix < 0) {
-                    warnings.push({
-                        row: 1,
-                        level: desc,
-                        message: `Coluna “${modelCols[key]}” não encontrada; orçamento não validado.`,
-                        type: 'model-missing-column',
-                    });
-                    return;
-                }
-                const populated = rows.some(r => {
-                    const v = clean(r[ix]);
-                    if (!v) return false;
-                    const n = Number(v.replace(',', '.'));
-                    return Number.isFinite(n) ? n > 0 : v.toLowerCase() !== 'false';
-                });
-                if (mode === 'required' && !populated)
-                    errors.push({
-                        row: 1,
-                        level: desc,
-                        message: `Modelo ${rule.label}: orçamento esperado neste nível, mas não foi encontrado.`,
-                        type: 'model-budget',
-                    });
-                if (mode === 'forbidden' && populated)
-                    warnings.push({
-                        row: 1,
-                        level: desc,
-                        message: `Modelo ${rule.label}: orçamento encontrado neste nível. Confirme se a estrutura CBO/ABO está correta.`,
-                        type: 'model-budget',
-                    });
-            };
-            checkValue('objective', ['Outcome Sales'], 'Campanha', 'Objetivo');
-            checkValue('buying', ['AUCTION'], 'Campanha', 'Tipo de compra');
-            checkValue('event', ['PURCHASE'], 'Conjunto', 'Evento de conversão');
-            checkValue('optimization', ['OFFSITE_CONVERSIONS'], 'Conjunto', 'Otimização');
-            checkValue('billing', ['IMPRESSIONS'], 'Conjunto', 'Cobrança');
-            checkValue('gender', rule.gender, 'Público', 'Gênero');
-            checkValue('countries', ['BR'], 'Público', 'Localização');
-            if (!isImage) checkValue('placements', ['facebook, instagram'], 'Posicionamentos', 'Plataformas');
-            checkValue('advantage', ['0'], 'Público', 'Advantage Audience');
-            checkValue('creative', ['Link Page Post Ad'], 'Anúncio', 'Tipo de criativo');
-            if (!isImage) checkValue('format', ['single_video'], 'Anúncio', 'Formato');
-            checkValue('cta', isImage ? ['SEE_DETAILS', 'LEARN_MORE'] : ['LEARN_MORE'], 'Anúncio', 'CTA');
-            checkBudget('campaignBudget', rule.campaignBudget, 'Campanha');
-            checkBudget('campaignLifetime', rule.campaignBudget === 'forbidden' ? 'forbidden' : 'optional', 'Campanha');
-            checkBudget('adsetBudget', rule.adsetBudget, 'Conjunto');
-            checkBudget('adsetLifetime', rule.adsetBudget === 'required' ? 'optional' : 'forbidden', 'Conjunto');
-            if (rule.campaignStrategy.length)
-                checkValue('campaignStrategy', rule.campaignStrategy, 'Campanha', 'Estratégia de lance');
-            if (rule.adsetStrategy.length)
-                checkValue('adsetStrategy', rule.adsetStrategy, 'Conjunto', 'Estratégia de lance');
-            if (rule.bidAmount === 'required' && !columnValues('bidAmount').length)
-                errors.push({
-                    row: 1,
-                    level: 'Conjunto',
-                    message: 'Modelo ESC BID: o campo Bid Amount é obrigatório para a estratégia Bid Cap.',
-                    type: 'model-bid',
-                });
-            if (rule.bidAmount === 'optional' && columnValues('bidAmount').length)
-                warnings.push({
-                    row: 1,
-                    level: 'Conjunto',
-                    message: `Modelo ${rule.label}: Bid Amount preenchido. Confirme se o limite de lance é intencional.`,
-                    type: 'model-bid',
-                });
-            const attributionIx = col('Attribution Spec');
-            if (attributionIx >= 0) {
-                const vals = [...new Set(rows.map(r => clean(r[attributionIx])).filter(Boolean))];
-                const expected =
-                    rule.attribution ||
-                    '[{"event_type":"CLICK_THROUGH","window_days":7},{"event_type":"VIEW_THROUGH","window_days":1},{"event_type":"ENGAGED_VIDEO_VIEW","window_days":1}]';
-                if (vals.some(v => v !== expected))
-                    warnings.push({
-                        row: 1,
-                        level: 'Atribuição',
-                        message: `Configuração de atribuição diferente da referência ${rule.label}.`,
-                        type: 'model-mismatch',
-                    });
-            } else
-                warnings.push({
-                    row: 1,
-                    level: 'Atribuição',
-                    message: 'Coluna Attribution Spec não encontrada; não foi possível validar.',
-                    type: 'model-missing-column',
-                });
-        }
+        // (V15) Sem modelos de referência: as regras de estrutura de orçamento/lance acima valem para toda campanha.
+        // Gênero, atribuição, posicionamentos, CTA etc. são escolhas de cada campanha, não erros.
         // Identical adset names under the same campaign with different budget/targeting values can signal accidental split inconsistencies.
         const adsetGroups = new Map();
         rows.forEach((row, i) => {

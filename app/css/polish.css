@@ -1,5 +1,5 @@
 /* Evita piscar a Central de projetos antes da cachoeira inicial */
-html.egx-intro #egx-launcher > div {
+html.egx-intro #egx-launcher > .egx-home {
     opacity: 0;
 }
 /* Editor em Lote: área de trabalho só aparece depois de carregar uma planilha */
@@ -28,9 +28,6 @@ html.egx-intro #egx-launcher > div {
 #module-extractor > div:first-of-type h2 {
     font-size: 20px !important;
     font-weight: 800 !important;
-}
-#be-filter-status {
-    min-width: 150px;
 }
 /* Cachoeira: blocos caem em sequência ao abrir uma janela/aba (só opacity + transform) */
 @keyframes egxFall {

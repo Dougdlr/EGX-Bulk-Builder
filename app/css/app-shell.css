@@ -86,6 +86,85 @@
     }
 }
 
+/* ---------- Formulários em diálogo (EGXDialog.form) ---------- */
+.egx-dialog-wide {
+    width: min(640px, 100%);
+}
+.egx-form-row {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.egx-form-row[hidden] {
+    display: none;
+}
+.egx-form-row.is-check {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+.egx-form-row .egx-dialog-input {
+    margin-top: 0;
+}
+.egx-form-row textarea.egx-dialog-input {
+    resize: vertical;
+    min-height: 70px;
+    font-family: inherit;
+}
+.egx-form-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #cbd5e1;
+}
+.egx-form-hint {
+    font-size: 0.7rem;
+    color: #64748b;
+}
+.egx-form-info {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    background: rgba(2, 6, 23, 0.5);
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    border-radius: 10px;
+    padding: 8px 10px;
+    white-space: pre-line;
+}
+.egx-form-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 240px;
+    overflow: auto;
+}
+.egx-form-choice {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    padding: 7px 10px;
+    border: 1px solid rgba(51, 65, 85, 0.7);
+    border-radius: 10px;
+    cursor: pointer;
+}
+.egx-form-choice:has(input:checked) {
+    border-color: rgba(168, 85, 247, 0.7);
+    background: rgba(88, 28, 135, 0.18);
+}
+.egx-form-choice small {
+    flex-basis: 100%;
+    padding-left: 24px;
+    color: #64748b;
+    font-size: 0.7rem;
+}
+.egx-form-error {
+    margin-top: 10px;
+    font-size: 0.78rem;
+    color: #fca5a5;
+}
+
 /* ---------- Indicador de salvamento ---------- */
 .egx-save-status {
     display: inline-flex;

@@ -61,7 +61,6 @@ const HEADERS = [
     'Optimized Conversion Tracking Pixels',
     'Optimized Event',
     'Link',
-    'Product Set ID',
     'Countries',
     'Location Types',
     'Gender',

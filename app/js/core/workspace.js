@@ -424,6 +424,13 @@
         if (!f) return showAppToast('Arquivo não encontrado em Exports/ (autorize a pasta do Workspace).', 'error');
         dl(f, e.fileName);
     }
+    // Lê a cópia de uma exportação (para reabrir no Editor). Retorna File ou null.
+    async function readExportFile(id) {
+        const p = loadedProject();
+        const e = exportsIndex.find(x => x.id === id);
+        if (!p || !e?.savedAs) return null;
+        return S.readFile(`${P(p)}/Exports/${e.savedAs}`);
+    }
     // Mapa CÓDIGO → usos anteriores (para avisar sobre criativo repetido no Criador).
     function creativeUsage() {
         if (usageCache) return usageCache;
@@ -919,6 +926,7 @@
     /* ================= Pontes públicas ================= */
     window.EGXWorkspace = {
         recordExport,
+        readExportFile,
         creativeUsage,
         exportsIndex: () => exportsIndex.slice(),
         activeProject: () => loadedProject(),

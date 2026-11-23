@@ -26,7 +26,8 @@ html[data-egx-theme='tint'] #egx-launcher {
         rgba(34, 12, 55, 0.3)
     ) !important;
 }
-/* Sem imagem, os temas de vidro ganham manchas de cor para o desfoque ter o que refratar */
+/* Sem imagem,
+os temas de vidro ganham manchas de cor para o desfoque ter o que refratar */
 #egx-wallpaper-layer::after {
     content: '';
     position: absolute;
@@ -58,73 +59,11 @@ html[data-egx-theme='glass'] {
     --egx-surface2: rgba(24, 34, 54, 0.34);
     --egx-border: rgba(255, 255, 255, 0.13);
 }
-html[data-egx-theme='glass']
-    :is(
-        header,
-        .egx-launcher-card,
-        #egx-project-dashboard > div > .egx-dash-card,
-        #egx-project-dashboard > section.egx-dash-card,
-        #module-meta-ads > aside,
-        #module-meta-ads > main > div,
-        #module-meta-ads > main > section > div,
-        #module-extractor > section,
-        #module-extractor > div.grid > div,
-        #module-tasks > section,
-        #module-tasks > .egx-td-grid > section,
-        #be-dropzone,
-        #be-import-preview,
-        #be-workspace
-    ) {
-    background: linear-gradient(
-            140deg,
-            rgba(255, 255, 255, 0.13),
-            rgba(255, 255, 255, 0.035) 45%,
-            rgba(255, 255, 255, 0.07)
-        ),
-        rgba(14, 19, 34, 0.34) !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.22),
-        inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-        0 20px 44px rgba(0, 0, 0, 0.3) !important;
-    -webkit-backdrop-filter: blur(var(--egx-glass-blur)) saturate(175%) !important;
-    backdrop-filter: blur(var(--egx-glass-blur)) saturate(175%) !important;
-}
 
 /* ---------- Vidro colorido ---------- */
 html[data-egx-theme='tint'] {
     --egx-surface: color-mix(in srgb, var(--egx-tint) 14%, rgba(12, 16, 28, 0.42));
     --egx-border: color-mix(in srgb, var(--egx-tint) 38%, transparent);
-}
-html[data-egx-theme='tint']
-    :is(
-        header,
-        .egx-launcher-card,
-        #egx-project-dashboard > div > .egx-dash-card,
-        #egx-project-dashboard > section.egx-dash-card,
-        #module-meta-ads > aside,
-        #module-meta-ads > main > div,
-        #module-meta-ads > main > section > div,
-        #module-extractor > section,
-        #module-extractor > div.grid > div,
-        #module-tasks > section,
-        #module-tasks > .egx-td-grid > section,
-        #be-dropzone,
-        #be-import-preview,
-        #be-workspace
-    ) {
-    background: linear-gradient(
-            140deg,
-            color-mix(in srgb, var(--egx-tint) 26%, transparent),
-            color-mix(in srgb, var(--egx-tint) 6%, transparent) 55%
-        ),
-        rgba(10, 14, 26, 0.42) !important;
-    border: 1px solid color-mix(in srgb, var(--egx-tint) 42%, rgba(255, 255, 255, 0.08)) !important;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 20px 44px rgba(0, 0, 0, 0.32) !important;
-    -webkit-backdrop-filter: blur(var(--egx-glass-blur)) saturate(160%) !important;
-    backdrop-filter: blur(var(--egx-glass-blur)) saturate(160%) !important;
 }
 
 /* Campos e faixas internas ficam translúcidos nos temas de vidro */
@@ -143,20 +82,6 @@ html:is([data-egx-theme='glass'], [data-egx-theme='tint'])
     background-color: rgba(6, 10, 20, 0.46) !important;
     border-color: rgba(255, 255, 255, 0.12) !important;
 }
-html:is([data-egx-theme='glass'], [data-egx-theme='tint'])
-    :is(
-        #be-workspace > div:first-child,
-        #be-workspace table thead,
-        #module-meta-ads th,
-        #module-extractor th,
-        #egx-project-dashboard section .egx-dash-card,
-        #module-meta-ads .bg-egx-card,
-        #module-meta-ads .bg-egx-bg,
-        #module-extractor .bg-egx-card,
-        #module-extractor .bg-egx-bg
-    ) {
-    background: rgba(8, 12, 24, 0.34) !important;
-}
 
 /* ---------- Cor sólida ---------- */
 html[data-egx-theme='solid'] {
@@ -174,28 +99,6 @@ html[data-egx-theme='solid'] #egx-wallpaper-layer {
 html[data-egx-theme='solid'] #egx-launcher {
     background: var(--egx-bg) !important;
 }
-html[data-egx-theme='solid']
-    :is(
-        header,
-        .egx-launcher-card,
-        #egx-project-dashboard > div > .egx-dash-card,
-        #egx-project-dashboard > section.egx-dash-card,
-        #module-meta-ads > aside,
-        #module-meta-ads > main > div,
-        #module-meta-ads > main > section > div,
-        #module-extractor > section,
-        #module-extractor > div.grid > div,
-        #module-tasks > section,
-        #module-tasks > .egx-td-grid > section,
-        #be-dropzone,
-        #be-import-preview,
-        #be-workspace
-    ) {
-    background: var(--egx-surface) !important;
-    border-color: var(--egx-border) !important;
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-}
 
 /* Celulares: desfoque mais leve para não pesar */
 @media (max-width: 1023px) {
@@ -211,10 +114,7 @@ html[data-egx-theme='solid']
             #module-extractor > section,
             #module-extractor > div.grid > div,
             #module-tasks > section,
-            #module-tasks > .egx-td-grid > section,
-            #be-dropzone,
-            #be-import-preview,
-            #be-workspace
+            #module-tasks > .egx-td-grid > section
         ) {
         -webkit-backdrop-filter: blur(12px) saturate(150%) !important;
         backdrop-filter: blur(12px) saturate(150%) !important;

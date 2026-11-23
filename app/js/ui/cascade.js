@@ -35,7 +35,7 @@
         ],
         'nav-tab-meta': [
             'module-meta-ads',
-            [':scope > aside', ':scope > main > div:first-child', ':scope > main > section:not(.hidden)'],
+            [':scope > .mc-hero', ':scope > main > section:not(.hidden)', ':scope > aside'],
         ],
         'nav-tab-extractor': [
             'module-extractor',
@@ -60,7 +60,9 @@
     // Central de projetos
     const launcher = document.getElementById('egx-launcher');
     const launcherItems = () =>
-        launcher ? q(launcher, [':scope > div > div:first-child', ':scope section', '#egx-project-list > *']) : [];
+        launcher
+            ? q(launcher, ['.egx-home-top', '.egx-home-hero > *', '.egx-home-projects', '.egx-home-side > *', '#egx-project-list > *'])
+            : [];
     if (document.body.classList.contains('egx-launcher-active')) {
         launcher.dataset.cascaded = '1';
         cascade(launcherItems());
